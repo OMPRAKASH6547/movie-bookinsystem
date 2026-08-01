@@ -20,7 +20,13 @@ export interface IUser extends Document {
   referralCode: string;
   referredBy?: string;
   tenantId?: mongoose.Types.ObjectId;
+  /** For staff: parent theatre owner user id */
+  ownerId?: mongoose.Types.ObjectId;
   theatreIds: mongoose.Types.ObjectId[];
+  customPermissions?: string[];
+  ownerStatus?: "pending" | "approved" | "rejected" | "suspended";
+  subscriptionPlan?: string;
+  twoFactorEnabled?: boolean;
   lastLoginAt?: Date;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
@@ -64,7 +70,16 @@ const UserSchema = new Schema<IUser>(
     referralCode: { type: String, unique: true, sparse: true },
     referredBy: String,
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant" },
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     theatreIds: [{ type: Schema.Types.ObjectId, ref: "Theatre" }],
+    customPermissions: [String],
+    ownerStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "suspended"],
+      index: true,
+    },
+    subscriptionPlan: { type: String, default: "Starter" },
+    twoFactorEnabled: { type: Boolean, default: false },
     lastLoginAt: Date,
     resetPasswordToken: String,
     resetPasswordExpires: Date,

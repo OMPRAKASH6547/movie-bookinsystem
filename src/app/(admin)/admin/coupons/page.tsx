@@ -1,47 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { api } from "@/lib/api/client";
+import { PageHeader } from "@/components/dashboard/page-header";
 
-const INITIAL = [
-  { code: "CINEPASS50", type: "percentage", value: 50, active: true, used: 128 },
-  { code: "STUDENT20", type: "percentage", value: 20, active: true, used: 64 },
-  { code: "WALLET150", type: "fixed", value: 150, active: true, used: 41 },
-  { code: "BOGOWED", type: "percentage", value: 25, active: false, used: 12 },
-];
+interface CouponRow {
+  _id: string;
+  code: string;
+  discountType: string;
+  discountValue: number;
+  usedCount?: number;
+  isActive: boolean;
+  description?: string;
+}
 
 export default function AdminCouponsPage() {
-  const [coupons, setCoupons] = useState(INITIAL);
+  const [coupons, setCoupons] = useState<CouponRow[]>([]);
   const [code, setCode] = useState("");
+  const [value, setValue] = useState("20");
+
+  const load = async () => {
+    const { data } = await api.get("/admin/coupons");
+    setCoupons(data.data || []);
+  };
+
+  useEffect(() => {
+    load().catch(() => toast.error("Failed to load coupons"));
+  }, []);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="font-display text-3xl tracking-tight">Coupon management</h1>
-        <div className="flex gap-2">
-          <Input
-            placeholder="NEWCODE"
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            className="w-40"
-          />
-          <Button
-            onClick={() => {
-              if (!code) return;
-              setCoupons((c) => [
-                { code, type: "percentage", value: 10, active: true, used: 0 },
-                ...c,
-              ]);
-              setCode("");
-              toast.success("Coupon created");
-            }}
-          >
-            Add coupon
-          </Button>
-        </div>
+      <PageHeader title="Coupon management" subtitle="Create and pause promotional codes" />
+
+      <div className="flex flex-wrap gap-2">
+        <Input
+          placeholder="NEWCODE"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          className="w-40"
+        />
+        <Input
+          type="number"
+          placeholder="%"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-24"
+        />
+        <Button
+          onClick={async () => {
+            if (!code) return;
+            await api.post("/admin/coupons", {
+              code,
+              discountType: "percentage",
+              discountValue: Number(value),
+              description: `${value}% off`,
+            });
+            toast.success("Coupon created");
+            setCode("");
+            load();
+          }}
+        >
+          Add coupon
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-border">
@@ -58,27 +82,30 @@ export default function AdminCouponsPage() {
           </thead>
           <tbody>
             {coupons.map((c) => (
-              <tr key={c.code} className="border-t border-border">
+              <tr key={c._id || c.code} className="border-t border-border">
                 <td className="p-3 font-mono font-semibold">{c.code}</td>
-                <td className="p-3 capitalize">{c.type}</td>
-                <td className="p-3">{c.type === "fixed" ? `₹${c.value}` : `${c.value}%`}</td>
-                <td className="p-3">{c.used}</td>
+                <td className="p-3 capitalize">{c.discountType}</td>
                 <td className="p-3">
-                  <Badge variant={c.active ? "success" : "outline"}>
-                    {c.active ? "active" : "paused"}
+                  {c.discountType === "fixed" ? `₹${c.discountValue}` : `${c.discountValue}%`}
+                </td>
+                <td className="p-3">{c.usedCount || 0}</td>
+                <td className="p-3">
+                  <Badge variant={c.isActive ? "success" : "outline"}>
+                    {c.isActive ? "active" : "paused"}
                   </Badge>
                 </td>
                 <td className="p-3">
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => {
-                      setCoupons((list) =>
-                        list.map((x) =>
-                          x.code === c.code ? { ...x, active: !x.active } : x
-                        )
-                      );
-                      toast.success("Coupon updated");
+                    onClick={async () => {
+                      await api.patch("/admin/coupons", {
+                        id: c._id,
+                        code: c.code,
+                        isActive: !c.isActive,
+                      });
+                      toast.success("Updated");
+                      load();
                     }}
                   >
                     Toggle

@@ -80,8 +80,13 @@ export default function RegisterPage() {
             8+ chars with upper, lower, and a number
           </p>
         </div>
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating…" : "Create account"}
+        <Button
+          type="submit"
+          className="w-full"
+          loading={isSubmitting}
+          loadingText="Creating…"
+        >
+          Create account
         </Button>
       </form>
 

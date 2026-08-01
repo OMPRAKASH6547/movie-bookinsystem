@@ -6,10 +6,10 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import { nanoid } from "nanoid";
 import { connectDB, disconnectDB } from "../src/lib/db/mongodb";
-import { User, Movie, Theatre, Screen, Show, Coupon, Wallet } from "../src/models";
+import { User, Movie, Theatre, Screen, Show, Coupon, Wallet, UserTheaterMapping } from "../src/models";
 import { hashPassword } from "../src/lib/auth/password";
 import { SEED_MOVIES } from "../src/data/movies";
-import { ROLES } from "../src/constants/roles";
+import { ROLES, ROLE_PERMISSIONS } from "../src/constants/roles";
 import { SEAT_TYPES, MOVIE_STATUS } from "../src/constants";
 import { slugify } from "../src/utils/format";
 
@@ -50,6 +50,7 @@ async function seed() {
     Show.deleteMany({}),
     Coupon.deleteMany({}),
     Wallet.deleteMany({}),
+    UserTheaterMapping.deleteMany({}),
   ]);
 
   const password = await hashPassword("Password1");
@@ -78,6 +79,8 @@ async function seed() {
       role: ROLES.THEATRE_OWNER,
       isEmailVerified: true,
       referralCode: nanoid(8).toUpperCase(),
+      ownerStatus: "approved",
+      subscriptionPlan: "Growth",
     },
     {
       name: "Demo Customer",
@@ -112,14 +115,93 @@ async function seed() {
     state: "Maharashtra",
     pincode: "400053",
     location: { type: "Point", coordinates: [72.835, 19.136] },
+    mapUrl: "https://www.google.com/maps?q=19.136,72.835",
     amenities: ["Dolby Atmos", "Recliners", "F&B", "Parking"],
     ownerId: owner._id,
     rating: 4.6,
     images: [],
     isActive: true,
+    status: "active",
+    gstNumber: "27AABCP1234A1Z5",
+    gstLegalName: "PVR Limited",
+    contactPhone: "+919876543210",
+    contactEmail: "owner@cinepass.app",
+    capacity: 192,
+    screenCount: 2,
+    commissionRate: 10,
   });
 
-  await User.findByIdAndUpdate(owner._id, { theatreIds: [theatre._id] });
+  const theatre2 = await Theatre.create({
+    name: "CinePass Phoenix Lower Parel",
+    slug: slugify("CinePass Phoenix Lower Parel"),
+    address: "Phoenix Mills, Lower Parel",
+    city: "Mumbai",
+    state: "Maharashtra",
+    pincode: "400013",
+    location: { type: "Point", coordinates: [72.832, 18.994] },
+    mapUrl: "https://www.google.com/maps?q=18.994,72.832",
+    amenities: ["IMAX", "Food Court", "Parking"],
+    ownerId: owner._id,
+    rating: 4.4,
+    images: [],
+    isActive: true,
+    status: "active",
+    gstNumber: "27AABCP1234A1Z5",
+    capacity: 120,
+    screenCount: 1,
+    commissionRate: 12,
+  });
+
+  const counterStaff = await User.create({
+    name: "Counter Riya",
+    email: "counter@cinepass.app",
+    password,
+    role: ROLES.COUNTER_STAFF,
+    ownerId: owner._id,
+    tenantId: owner._id,
+    theatreIds: [theatre._id],
+    customPermissions: [...ROLE_PERMISSIONS[ROLES.COUNTER_STAFF]],
+    isEmailVerified: true,
+    referralCode: nanoid(8).toUpperCase(),
+  });
+
+  const checker = await User.create({
+    name: "Checker Aman",
+    email: "checker@cinepass.app",
+    password,
+    role: ROLES.TICKET_CHECKER,
+    ownerId: owner._id,
+    tenantId: owner._id,
+    theatreIds: [theatre._id],
+    customPermissions: [...ROLE_PERMISSIONS[ROLES.TICKET_CHECKER]],
+    isEmailVerified: true,
+    referralCode: nanoid(8).toUpperCase(),
+  });
+
+  await UserTheaterMapping.create([
+    {
+      userId: counterStaff._id,
+      ownerId: owner._id,
+      theatreIds: [theatre._id],
+      counterIds: ["COUNTER-1"],
+      roleKey: ROLES.COUNTER_STAFF,
+      permissions: ROLE_PERMISSIONS[ROLES.COUNTER_STAFF],
+      isActive: true,
+    },
+    {
+      userId: checker._id,
+      ownerId: owner._id,
+      theatreIds: [theatre._id],
+      counterIds: [],
+      roleKey: ROLES.TICKET_CHECKER,
+      permissions: ROLE_PERMISSIONS[ROLES.TICKET_CHECKER],
+      isActive: true,
+    },
+  ]);
+
+  await User.findByIdAndUpdate(owner._id, {
+    theatreIds: [theatre._id, theatre2._id],
+  });
 
   const screen = await Screen.create({
     theatreId: theatre._id,
@@ -127,6 +209,22 @@ async function seed() {
     capacity: 96,
     screenType: "DOLBY",
     seatLayout: buildSeatLayout(),
+  });
+
+  await Screen.create({
+    theatreId: theatre._id,
+    name: "Audi 2",
+    capacity: 96,
+    screenType: "3D",
+    seatLayout: buildSeatLayout(),
+  });
+
+  await Screen.create({
+    theatreId: theatre2._id,
+    name: "IMAX Hall",
+    capacity: 120,
+    screenType: "IMAX",
+    seatLayout: buildSeatLayout(10, 12),
   });
 
   const nowShowing = movies.filter((m) => m.status === MOVIE_STATUS.NOW_SHOWING);
@@ -145,6 +243,7 @@ async function seed() {
         movieId: movie._id,
         theatreId: theatre._id,
         screenId: screen._id,
+        ownerId: owner._id,
         date,
         startTime: start,
         endTime: end,
@@ -155,10 +254,17 @@ async function seed() {
           { seatType: SEAT_TYPES.REGULAR, price: 220 },
           { seatType: SEAT_TYPES.PREMIUM, price: 320 },
           { seatType: SEAT_TYPES.RECLINER, price: 450 },
+          { seatType: SEAT_TYPES.VIP, price: 500 },
+        ],
+        weekendPricing: [
+          { seatType: SEAT_TYPES.REGULAR, price: 270 },
+          { seatType: SEAT_TYPES.PREMIUM, price: 370 },
+          { seatType: SEAT_TYPES.VIP, price: 550 },
         ],
         availableSeats: 96,
         totalSeats: 96,
         bookedSeats: [],
+        status: "scheduled",
         isActive: true,
       });
     }
@@ -205,11 +311,16 @@ async function seed() {
 
   console.log("\n✅ Seed complete\n");
   console.log("Accounts (password: Password1)");
-  console.log("  super@cinepass.app   → Super Admin");
-  console.log("  admin@cinepass.app   → Admin");
-  console.log("  owner@cinepass.app   → Theatre Owner");
+  console.log("  super@cinepass.app    → Super Admin");
+  console.log("  admin@cinepass.app    → Admin");
+  console.log("  owner@cinepass.app    → Theatre Owner (multi-theatre)");
+  console.log("  counter@cinepass.app  → POS Counter Staff");
+  console.log("  checker@cinepass.app  → Ticket Checker");
   console.log("  customer@cinepass.app → Customer");
-  console.log(`\nMovies: ${movies.length} · Shows: ${shows.length} · Theatre: ${theatre.name}`);
+  console.log(
+    `\nMovies: ${movies.length} · Shows: ${shows.length} · Theatres: ${theatre.name}, ${theatre2.name}`
+  );
+  console.log(`Staff: ${counterStaff.email}, ${checker.email}`);
 
   await disconnectDB();
   await mongoose.disconnect();

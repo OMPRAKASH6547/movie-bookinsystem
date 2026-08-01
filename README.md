@@ -69,8 +69,22 @@ npm run dev
 |--------|----------|------|
 | `super@cinepass.app` | `Password1` | Super Admin |
 | `admin@cinepass.app` | `Password1` | Admin |
-| `owner@cinepass.app` | `Password1` | Theatre Owner |
+| `owner@cinepass.app` | `Password1` | Theatre Owner (multi-theatre) |
+| `counter@cinepass.app` | `Password1` | POS Counter Staff |
+| `checker@cinepass.app` | `Password1` | Ticket Checker |
 | `customer@cinepass.app` | `Password1` | Customer |
+
+### Multi-Theater Management
+
+Owner-scoped SaaS with data isolation (`ownerId` on theatres, shows, bookings, staff).
+
+| Area | Paths |
+|------|--------|
+| Super Admin | `/super-admin/owners`, `/super-admin/theatres`, `/super-admin/revenue` |
+| Owner ops | `/theatre/theatres`, `/theatre/movies`, `/theatre/shows`, `/theatre/staff` |
+| POS / verify | `/theatre/pos`, `/theatre/verify` |
+| Analytics | `/theatre/revenue`, `/theatre/performance`, `/theatre/reports`, `/theatre/finance` |
+| APIs | `/api/v1/owner/*`, `/api/v1/pos/*`, `/api/v1/super-admin/owners` |
 
 ## Architecture
 

@@ -6,7 +6,7 @@ import { User, Movie, Booking, Theatre } from "@/models";
 import { SEED_MOVIES } from "@/data/movies";
 
 export const GET = withAuth(
-  async (_req) => {
+  async () => {
     try {
       await connectDB();
       const [totalUsers, totalMovies, totalBookings, totalTheatres, revenue] =

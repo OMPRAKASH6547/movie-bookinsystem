@@ -10,3 +10,7 @@ export { Review } from "./Review";
 export { Wallet, Transaction } from "./Wallet";
 export { Notification } from "./Notification";
 export { AuditLog } from "./AuditLog";
+export { StaffSession, StaffActivityLog } from "./StaffActivity";
+export { TicketScan } from "./TicketScan";
+export { Expense, CashClosing } from "./Expense";
+export { PermissionModel, RoleModel, UserTheaterMapping } from "./Rbac";

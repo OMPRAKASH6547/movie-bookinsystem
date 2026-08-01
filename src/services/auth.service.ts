@@ -11,8 +11,7 @@ import {
 } from "@/lib/email/templates";
 import { Wallet } from "@/models/Wallet";
 import { AuditLog } from "@/models/AuditLog";
-import { ROLES } from "@/constants/roles";
-import { ROLE_PERMISSIONS } from "@/constants/roles";
+import { ROLES, resolvePermissions } from "@/constants/roles";
 import { TOKEN_CONFIG } from "@/constants";
 import type { RegisterInput, LoginInput } from "@/lib/validators/auth";
 import type { AuthUser } from "@/types";
@@ -24,6 +23,7 @@ function toAuthUser(user: {
   role: AuthUser["role"];
   avatar?: string;
   isEmailVerified: boolean;
+  customPermissions?: string[];
 }): AuthUser {
   return {
     id: user._id.toString(),
@@ -32,7 +32,7 @@ function toAuthUser(user: {
     role: user.role,
     avatar: user.avatar,
     isEmailVerified: user.isEmailVerified,
-    permissions: ROLE_PERMISSIONS[user.role] || [],
+    permissions: resolvePermissions(user.role, user.customPermissions),
   };
 }
 
@@ -97,12 +97,45 @@ export class AuthService {
 
     await userRepository.updateLastLogin(user._id.toString());
 
+    const ownerScope =
+      user.ownerId?.toString() ||
+      user.tenantId?.toString() ||
+      (user.role === ROLES.THEATRE_OWNER ? user._id.toString() : undefined);
+
     const tokens = await createAuthTokens({
       id: user._id.toString(),
       email: user.email,
       role: user.role,
-      tenantId: user.tenantId?.toString(),
+      tenantId: ownerScope,
+      customPermissions: user.customPermissions,
     });
+
+    // Staff login activity session
+    if (
+      user.role !== ROLES.CUSTOMER &&
+      user.role !== ROLES.GUEST &&
+      user.role !== ROLES.SUPER_ADMIN &&
+      user.role !== ROLES.ADMIN
+    ) {
+      try {
+        const { StaffSession } = await import("@/models/StaffActivity");
+        const { device, browser } = (() => {
+          return { device: "Unknown", browser: "Unknown" };
+        })();
+        await StaffSession.create({
+          userId: user._id,
+          ownerId: ownerScope || user._id,
+          loginAt: new Date(),
+          ipAddress: ip,
+          device,
+          browser,
+          lastActivityAt: new Date(),
+          isActive: true,
+        });
+      } catch {
+        /* optional when models unavailable */
+      }
+    }
 
     await AuditLog.create({
       userId: user._id,

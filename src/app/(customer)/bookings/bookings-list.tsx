@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
 import { formatCurrency } from "@/utils/format";
 import { useAuthStore } from "@/stores/auth.store";
+import { ListSkeleton } from "@/components/loading/skeletons";
+import { EmptyState } from "@/components/loading/empty-state";
+import { ErrorState } from "@/components/loading/error-state";
+import { SmartImage } from "@/components/loading/smart-image";
 
 interface BookingRow {
   _id: string;
@@ -29,6 +33,8 @@ interface BookingRow {
 export default function BookingsList() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
   const token = useAuthStore((s) => s.accessToken);
   const searchParams = useSearchParams();
 
@@ -37,26 +43,27 @@ export default function BookingsList() {
     if (searchParams.get("payu") === "success") toast.success("PayU payment successful");
   }, [searchParams]);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const { data } = await api.get("/bookings/my");
-        if (!cancelled) setBookings(data.data || []);
-      } catch {
-        if (!cancelled) setBookings([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await api.get("/bookings/my");
+      setBookings(data.data || []);
+    } catch (err) {
+      setError(err);
+      setBookings([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     load();
-    return () => {
-      cancelled = true;
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const cancelBooking = async (id: string) => {
+    setActionId(`cancel-${id}`);
     try {
       await api.post(`/bookings/${id}/cancel`, { reason: "User cancelled" });
       setBookings((prev) =>
@@ -68,10 +75,13 @@ export default function BookingsList() {
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           "Cancel failed"
       );
+    } finally {
+      setActionId(null);
     }
   };
 
   const downloadPdf = async (id: string, bookingNumber: string) => {
+    setActionId(`pdf-${id}`);
     try {
       const res = await api.get(`/bookings/${id}/pdf`, { responseType: "blob" });
       const url = URL.createObjectURL(res.data);
@@ -83,6 +93,8 @@ export default function BookingsList() {
       toast.success("PDF downloaded");
     } catch {
       toast.error("PDF download failed");
+    } finally {
+      setActionId(null);
     }
   };
 
@@ -96,14 +108,11 @@ export default function BookingsList() {
       </div>
 
       {loading ? (
-        <p className="text-muted-foreground">Loading bookings…</p>
+        <ListSkeleton count={3} />
+      ) : error ? (
+        <ErrorState onRetry={load} message="Could not load your bookings." />
       ) : bookings.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center space-y-3">
-          <p className="text-muted-foreground">No bookings yet.</p>
-          <Button asChild>
-            <Link href="/movies">Browse movies</Link>
-          </Button>
-        </div>
+        <EmptyState variant="bookings" />
       ) : (
         bookings.map((b) => {
           const title = b.movieTitle || b.movieId?.title || "Movie";
@@ -139,11 +148,11 @@ export default function BookingsList() {
 
               {b.status === "confirmed" && b.qrCode && (
                 <div className="flex items-center gap-4 rounded-lg bg-muted/40 p-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <SmartImage
                     src={b.qrCode}
                     alt="QR preview"
-                    className="w-20 h-20 rounded-md bg-white p-1"
+                    containerClassName="w-20 h-20 rounded-md overflow-hidden bg-white p-1"
+                    className="w-full h-full object-contain"
                   />
                   <p className="text-xs text-muted-foreground">
                     QR ticket ready — open full ticket to scan at the gate.
@@ -160,6 +169,8 @@ export default function BookingsList() {
                     <Button
                       size="sm"
                       variant="outline"
+                      loading={actionId === `pdf-${b._id}`}
+                      loadingText="Downloading…"
                       onClick={() => downloadPdf(b._id, b.bookingNumber)}
                     >
                       Download PDF
@@ -168,6 +179,8 @@ export default function BookingsList() {
                       size="sm"
                       variant="ghost"
                       className="text-destructive"
+                      loading={actionId === `cancel-${b._id}`}
+                      loadingText="Cancelling…"
                       onClick={() => cancelBooking(b._id)}
                     >
                       Cancel & refund

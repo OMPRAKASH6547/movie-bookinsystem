@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SmartImage } from "@/components/loading/smart-image";
 import { formatDuration } from "@/utils/format";
 import type { Movie } from "@/types";
 
@@ -24,15 +24,17 @@ export function MovieCard({ movie, index = 0 }: MovieCardProps) {
     >
       <Link href={`/movies/${movie.slug}`} className="block">
         <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-muted mb-3">
-          <Image
+          <SmartImage
             src={movie.poster}
             alt={movie.title}
             fill
             sizes="200px"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            containerClassName="absolute inset-0"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fallbackLabel={movie.title}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[2]" />
+          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity z-[3]">
             <Badge variant="accent" className="gap-1">
               <Star className="h-3 w-3 fill-current" />
               {movie.rating.toFixed(1)}

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { getRedis } from "@/lib/redis/client";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const health = {
     status: "ok",

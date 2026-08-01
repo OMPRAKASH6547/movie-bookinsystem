@@ -156,10 +156,23 @@ body::before {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, var(--muted) 25%, color-mix(in oklab, var(--muted) 60%, white) 50%, var(--muted) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in oklab, var(--muted) 60%, white) 50%,
+    var(--muted) 75%
+  );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 0.5rem;
+  /* Reserve space to reduce CLS */
+  min-height: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }
 
 .movie-row {

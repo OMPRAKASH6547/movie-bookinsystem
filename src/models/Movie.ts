@@ -23,6 +23,8 @@ export interface IMovie extends Document {
   isTrending: boolean;
   views: number;
   tags: string[];
+  /** Owner-scoped catalog entry; null/undefined = platform-wide */
+  ownerId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +56,7 @@ const MovieSchema = new Schema<IMovie>(
     isTrending: { type: Boolean, default: false, index: true },
     views: { type: Number, default: 0 },
     tags: [String],
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", index: true },
   },
   { timestamps: true }
 );

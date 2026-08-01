@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import { TOKEN_CONFIG } from "@/constants";
 import type { JwtPayload, AuthTokens } from "@/types";
 import type { Role } from "@/constants/roles";
-import { ROLE_PERMISSIONS } from "@/constants/roles";
+import { resolvePermissions } from "@/constants/roles";
 import { cache } from "@/lib/redis/client";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || "cinepass-access-secret-change-me";
@@ -34,9 +34,10 @@ export async function createAuthTokens(user: {
   email: string;
   role: Role;
   tenantId?: string;
+  customPermissions?: string[];
 }): Promise<AuthTokens & { sessionId: string }> {
   const sessionId = nanoid();
-  const permissions = ROLE_PERMISSIONS[user.role] || [];
+  const permissions = resolvePermissions(user.role, user.customPermissions);
 
   const payload: Omit<JwtPayload, "iat" | "exp"> = {
     sub: user.id,
@@ -82,6 +83,7 @@ export async function rotateRefreshToken(
       email: payload.email,
       role: payload.role,
       tenantId: payload.tenantId,
+      customPermissions: payload.permissions,
     });
   } catch {
     return null;

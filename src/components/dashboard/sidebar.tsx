@@ -10,6 +10,7 @@ export interface NavItem {
   href: string;
   label: string;
   icon: React.ReactNode;
+  exact?: boolean;
 }
 
 export function DashboardSidebar({
@@ -38,7 +39,9 @@ export function DashboardSidebar({
       </div>
       <nav className="flex-1 p-3 space-y-0.5">
         {items.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active = item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}

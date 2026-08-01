@@ -10,7 +10,8 @@ import { SEED_MOVIES } from "@/data/movies";
 import { GENRES, LANGUAGES } from "@/constants";
 import { api } from "@/lib/api/client";
 import type { Movie } from "@/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MovieGridSkeleton } from "@/components/loading/skeletons";
+import { EmptyState } from "@/components/loading/empty-state";
 
 export function MoviesClient() {
   const searchParams = useSearchParams();
@@ -116,13 +117,20 @@ export function MoviesClient() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-[2/3] w-full" />
-          ))}
-        </div>
+        <MovieGridSkeleton count={10} />
       ) : movies.length === 0 ? (
-        <p className="text-muted-foreground py-20 text-center">No movies match your filters.</p>
+        <EmptyState
+          variant="movies"
+          title="No movies match your filters"
+          description="Try clearing genre or language filters to see more titles."
+          actionLabel="Clear filters"
+          onAction={() => {
+            setGenre("");
+            setLanguage("");
+            setStatus("");
+            setSearch("");
+          }}
+        />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 justify-items-center sm:justify-items-start">
           {movies.map((movie, i) => (

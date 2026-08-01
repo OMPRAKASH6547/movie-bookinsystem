@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { z } from "zod";
 import QRCode from "qrcode";
 import { withAuth, type AuthenticatedRequest } from "@/lib/api/with-auth";
@@ -202,6 +201,6 @@ export const POST = withAuth(async (req: AuthenticatedRequest) => {
 });
 
 /** Allow unauthenticated checkout for guest browsing → create guest session first */
-export async function OPTIONS(_req: NextRequest) {
+export async function OPTIONS() {
   return successResponse(null);
 }

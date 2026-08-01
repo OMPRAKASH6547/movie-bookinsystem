@@ -21,6 +21,8 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
 
   const {
     register,
@@ -36,10 +38,22 @@ export default function LoginPage() {
       const res = await api.post("/auth/login", data);
       setAuth(res.data.data.user, res.data.data.accessToken);
       toast.success("Welcome back!");
-      const role = res.data.data.user.role;
-      if (role === "admin" || role === "super_admin") router.push("/admin");
-      else if (role === "theatre_owner") router.push("/theatre");
-      else router.push("/dashboard");
+      const loggedIn = res.data.data.user;
+      const role = loggedIn.role;
+      if (role === "super_admin") router.push("/super-admin");
+      else if (role === "admin") router.push("/admin");
+      else if (
+        role === "theatre_owner" ||
+        role === "manager" ||
+        role === "counter_staff" ||
+        role === "ticket_checker" ||
+        role === "accountant" ||
+        role === "marketing" ||
+        role === "employee"
+      ) {
+        const { defaultTheatreLanding } = await import("@/lib/theatre/nav");
+        router.push(defaultTheatreLanding(loggedIn.permissions, role));
+      } else router.push("/dashboard");
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
@@ -49,6 +63,7 @@ export default function LoginPage() {
   };
 
   const handleGuest = async () => {
+    setGuestLoading(true);
     try {
       const res = await api.post("/auth/guest", {
         name: "Guest User",
@@ -60,10 +75,13 @@ export default function LoginPage() {
     } catch {
       toast.error("Guest login requires MongoDB. Browse movies without login.");
       router.push("/movies");
+    } finally {
+      setGuestLoading(false);
     }
   };
 
   const handleOtp = async () => {
+    setOtpLoading(true);
     try {
       if (!otpSent) {
         const res = await api.post("/auth/otp", { phone });
@@ -81,6 +99,8 @@ export default function LoginPage() {
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           "OTP failed"
       );
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -124,8 +144,13 @@ export default function LoginPage() {
             <input type="checkbox" {...register("rememberMe")} className="rounded" />
             Remember me
           </label>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in…" : "Sign in"}
+          <Button
+            type="submit"
+            className="w-full"
+            loading={isSubmitting}
+            loadingText="Signing in…"
+          >
+            Sign in
           </Button>
         </form>
       ) : (
@@ -151,7 +176,13 @@ export default function LoginPage() {
               />
             </div>
           )}
-          <Button type="button" className="w-full" onClick={handleOtp}>
+          <Button
+            type="button"
+            className="w-full"
+            onClick={handleOtp}
+            loading={otpLoading}
+            loadingText={otpSent ? "Verifying…" : "Sending…"}
+          >
             {otpSent ? "Verify OTP" : "Send OTP"}
           </Button>
         </div>
@@ -183,9 +214,16 @@ export default function LoginPage() {
         >
           {otpMode ? "Use email & password" : "Login with OTP"}
         </button>
-        <button type="button" className="text-muted-foreground hover:text-foreground" onClick={handleGuest}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-muted-foreground"
+          onClick={handleGuest}
+          loading={guestLoading}
+          loadingText="Starting guest…"
+        >
           Continue as guest
-        </button>
+        </Button>
         <p className="text-muted-foreground pt-2">
           New here?{" "}
           <Link href="/register" className="text-primary hover:underline font-medium">

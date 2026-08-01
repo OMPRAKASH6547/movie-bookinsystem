@@ -9,6 +9,7 @@ export interface ISeat {
   price: number;
   isAvailable: boolean;
   isAisle?: boolean;
+  status?: "available" | "blocked" | "maintenance";
 }
 
 export interface IScreen extends Document {
@@ -33,6 +34,11 @@ const SeatSchema = new Schema(
     price: { type: Number, required: true },
     isAvailable: { type: Boolean, default: true },
     isAisle: Boolean,
+    status: {
+      type: String,
+      enum: ["available", "blocked", "maintenance"],
+      default: "available",
+    },
   },
   { _id: false }
 );

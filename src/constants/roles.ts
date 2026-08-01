@@ -3,6 +3,10 @@ export const ROLES = {
   ADMIN: "admin",
   THEATRE_OWNER: "theatre_owner",
   MANAGER: "manager",
+  COUNTER_STAFF: "counter_staff",
+  TICKET_CHECKER: "ticket_checker",
+  ACCOUNTANT: "accountant",
+  MARKETING: "marketing",
   EMPLOYEE: "employee",
   CUSTOMER: "customer",
   GUEST: "guest",
@@ -11,13 +15,13 @@ export const ROLES = {
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export const PERMISSIONS = {
-  // Platform
   MANAGE_TENANTS: "manage_tenants",
   MANAGE_PLANS: "manage_plans",
   MANAGE_FEATURE_FLAGS: "manage_feature_flags",
   VIEW_PLATFORM_ANALYTICS: "view_platform_analytics",
+  ONBOARD_OWNERS: "onboard_owners",
+  APPROVE_THEATRES: "approve_theatres",
 
-  // Admin
   MANAGE_USERS: "manage_users",
   MANAGE_MOVIES: "manage_movies",
   MANAGE_GENRES: "manage_genres",
@@ -33,15 +37,25 @@ export const PERMISSIONS = {
   VIEW_ANALYTICS: "view_analytics",
   MANAGE_SETTINGS: "manage_settings",
 
-  // Theatre
   MANAGE_SCREENS: "manage_screens",
   MANAGE_SEATS: "manage_seats",
   MANAGE_SHOWS: "manage_shows",
   MANAGE_PRICING: "manage_pricing",
   MANAGE_STAFF: "manage_staff",
+  VIEW_OWNER_DASHBOARD: "view_owner_dashboard",
   VIEW_THEATRE_ANALYTICS: "view_theatre_analytics",
+  POS_BOOK: "pos_book",
+  POS_CANCEL: "pos_cancel",
+  POS_REFUND: "pos_refund",
+  POS_REPRINT: "pos_reprint",
+  SEARCH_CUSTOMERS: "search_customers",
+  VERIFY_TICKETS: "verify_tickets",
+  VIEW_REPORTS: "view_reports",
+  MANAGE_FINANCE: "manage_finance",
+  MANAGE_EXPENSES: "manage_expenses",
+  VIEW_STAFF_PERFORMANCE: "view_staff_performance",
+  VIEW_STAFF_ACTIVITY: "view_staff_activity",
 
-  // Customer
   BOOK_TICKETS: "book_tickets",
   WRITE_REVIEWS: "write_reviews",
   MANAGE_WISHLIST: "manage_wishlist",
@@ -49,6 +63,107 @@ export const PERMISSIONS = {
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+/** Human-readable labels for staff assignment UI */
+export const PERMISSION_LABELS: Record<Permission, string> = {
+  [PERMISSIONS.MANAGE_TENANTS]: "Manage tenants",
+  [PERMISSIONS.MANAGE_PLANS]: "Manage plans",
+  [PERMISSIONS.MANAGE_FEATURE_FLAGS]: "Feature flags",
+  [PERMISSIONS.VIEW_PLATFORM_ANALYTICS]: "Platform analytics",
+  [PERMISSIONS.ONBOARD_OWNERS]: "Onboard owners",
+  [PERMISSIONS.APPROVE_THEATRES]: "Approve theatres",
+  [PERMISSIONS.MANAGE_USERS]: "Manage users",
+  [PERMISSIONS.MANAGE_MOVIES]: "Movie management",
+  [PERMISSIONS.MANAGE_GENRES]: "Manage genres",
+  [PERMISSIONS.MANAGE_CITIES]: "Manage cities",
+  [PERMISSIONS.MANAGE_THEATRES]: "Theatre settings",
+  [PERMISSIONS.MANAGE_BOOKINGS]: "Manage bookings",
+  [PERMISSIONS.MANAGE_REFUNDS]: "Refunds",
+  [PERMISSIONS.MANAGE_COUPONS]: "Coupons",
+  [PERMISSIONS.MANAGE_OFFERS]: "Offers",
+  [PERMISSIONS.MANAGE_CMS]: "CMS",
+  [PERMISSIONS.MANAGE_BANNERS]: "Banners",
+  [PERMISSIONS.VIEW_AUDIT_LOGS]: "Audit logs",
+  [PERMISSIONS.VIEW_ANALYTICS]: "Analytics",
+  [PERMISSIONS.MANAGE_SETTINGS]: "Settings",
+  [PERMISSIONS.MANAGE_SCREENS]: "Screen management",
+  [PERMISSIONS.MANAGE_SEATS]: "Seat layout",
+  [PERMISSIONS.MANAGE_SHOWS]: "Show management",
+  [PERMISSIONS.MANAGE_PRICING]: "Pricing",
+  [PERMISSIONS.MANAGE_STAFF]: "Staff management",
+  [PERMISSIONS.VIEW_OWNER_DASHBOARD]: "Owner dashboard",
+  [PERMISSIONS.VIEW_THEATRE_ANALYTICS]: "Theatre analytics",
+  [PERMISSIONS.POS_BOOK]: "Offline ticket booking",
+  [PERMISSIONS.POS_CANCEL]: "Ticket cancellation",
+  [PERMISSIONS.POS_REFUND]: "Refunds (POS)",
+  [PERMISSIONS.POS_REPRINT]: "Reprint ticket",
+  [PERMISSIONS.SEARCH_CUSTOMERS]: "Customer search",
+  [PERMISSIONS.VERIFY_TICKETS]: "Ticket verification",
+  [PERMISSIONS.VIEW_REPORTS]: "Reports",
+  [PERMISSIONS.MANAGE_FINANCE]: "Finance",
+  [PERMISSIONS.MANAGE_EXPENSES]: "Expenses",
+  [PERMISSIONS.VIEW_STAFF_PERFORMANCE]: "Staff performance",
+  [PERMISSIONS.VIEW_STAFF_ACTIVITY]: "Staff activity logs",
+  [PERMISSIONS.BOOK_TICKETS]: "Book tickets",
+  [PERMISSIONS.WRITE_REVIEWS]: "Write reviews",
+  [PERMISSIONS.MANAGE_WISHLIST]: "Wishlist",
+  [PERMISSIONS.USE_WALLET]: "Wallet",
+};
+
+/** Permissions that can be assigned to staff by owners */
+export const ASSIGNABLE_STAFF_PERMISSIONS: Permission[] = [
+  PERMISSIONS.POS_BOOK,
+  PERMISSIONS.POS_CANCEL,
+  PERMISSIONS.POS_REFUND,
+  PERMISSIONS.POS_REPRINT,
+  PERMISSIONS.SEARCH_CUSTOMERS,
+  PERMISSIONS.VERIFY_TICKETS,
+  PERMISSIONS.MANAGE_SHOWS,
+  PERMISSIONS.MANAGE_MOVIES,
+  PERMISSIONS.MANAGE_PRICING,
+  PERMISSIONS.MANAGE_SCREENS,
+  PERMISSIONS.MANAGE_SEATS,
+  PERMISSIONS.MANAGE_STAFF,
+  PERMISSIONS.VIEW_OWNER_DASHBOARD,
+  PERMISSIONS.VIEW_THEATRE_ANALYTICS,
+  PERMISSIONS.VIEW_REPORTS,
+  PERMISSIONS.MANAGE_FINANCE,
+  PERMISSIONS.MANAGE_EXPENSES,
+  PERMISSIONS.VIEW_STAFF_PERFORMANCE,
+  PERMISSIONS.VIEW_STAFF_ACTIVITY,
+  PERMISSIONS.MANAGE_BOOKINGS,
+  PERMISSIONS.MANAGE_REFUNDS,
+  PERMISSIONS.MANAGE_OFFERS,
+  PERMISSIONS.MANAGE_COUPONS,
+];
+
+const OWNER_PERMS: Permission[] = [
+  PERMISSIONS.MANAGE_THEATRES,
+  PERMISSIONS.MANAGE_SCREENS,
+  PERMISSIONS.MANAGE_SEATS,
+  PERMISSIONS.MANAGE_SHOWS,
+  PERMISSIONS.MANAGE_PRICING,
+  PERMISSIONS.MANAGE_STAFF,
+  PERMISSIONS.MANAGE_MOVIES,
+  PERMISSIONS.MANAGE_OFFERS,
+  PERMISSIONS.VIEW_OWNER_DASHBOARD,
+  PERMISSIONS.VIEW_THEATRE_ANALYTICS,
+  PERMISSIONS.MANAGE_BOOKINGS,
+  PERMISSIONS.MANAGE_REFUNDS,
+  PERMISSIONS.POS_BOOK,
+  PERMISSIONS.POS_CANCEL,
+  PERMISSIONS.POS_REFUND,
+  PERMISSIONS.POS_REPRINT,
+  PERMISSIONS.SEARCH_CUSTOMERS,
+  PERMISSIONS.VERIFY_TICKETS,
+  PERMISSIONS.VIEW_REPORTS,
+  PERMISSIONS.MANAGE_FINANCE,
+  PERMISSIONS.MANAGE_EXPENSES,
+  PERMISSIONS.VIEW_STAFF_PERFORMANCE,
+  PERMISSIONS.VIEW_STAFF_ACTIVITY,
+  PERMISSIONS.MANAGE_SETTINGS,
+  PERMISSIONS.VIEW_AUDIT_LOGS,
+];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [ROLES.SUPER_ADMIN]: Object.values(PERMISSIONS),
@@ -67,24 +182,52 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.VIEW_AUDIT_LOGS,
     PERMISSIONS.VIEW_ANALYTICS,
     PERMISSIONS.MANAGE_SETTINGS,
+    PERMISSIONS.ONBOARD_OWNERS,
+    PERMISSIONS.APPROVE_THEATRES,
   ],
-  [ROLES.THEATRE_OWNER]: [
-    PERMISSIONS.MANAGE_SCREENS,
-    PERMISSIONS.MANAGE_SEATS,
-    PERMISSIONS.MANAGE_SHOWS,
-    PERMISSIONS.MANAGE_PRICING,
-    PERMISSIONS.MANAGE_STAFF,
-    PERMISSIONS.MANAGE_OFFERS,
-    PERMISSIONS.VIEW_THEATRE_ANALYTICS,
-    PERMISSIONS.MANAGE_BOOKINGS,
-  ],
+  [ROLES.THEATRE_OWNER]: OWNER_PERMS,
   [ROLES.MANAGER]: [
+    PERMISSIONS.VIEW_OWNER_DASHBOARD,
     PERMISSIONS.MANAGE_SHOWS,
     PERMISSIONS.MANAGE_PRICING,
+    PERMISSIONS.MANAGE_MOVIES,
     PERMISSIONS.VIEW_THEATRE_ANALYTICS,
     PERMISSIONS.MANAGE_BOOKINGS,
+    PERMISSIONS.POS_BOOK,
+    PERMISSIONS.POS_CANCEL,
+    PERMISSIONS.POS_REFUND,
+    PERMISSIONS.POS_REPRINT,
+    PERMISSIONS.SEARCH_CUSTOMERS,
+    PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.VIEW_STAFF_PERFORMANCE,
+    PERMISSIONS.VIEW_STAFF_ACTIVITY,
+    PERMISSIONS.MANAGE_STAFF,
   ],
-  [ROLES.EMPLOYEE]: [PERMISSIONS.MANAGE_BOOKINGS],
+  /** Default counter: booking + cancel + reprint + customer search only */
+  [ROLES.COUNTER_STAFF]: [
+    PERMISSIONS.POS_BOOK,
+    PERMISSIONS.POS_CANCEL,
+    PERMISSIONS.POS_REPRINT,
+    PERMISSIONS.SEARCH_CUSTOMERS,
+  ],
+  [ROLES.TICKET_CHECKER]: [PERMISSIONS.VERIFY_TICKETS],
+  [ROLES.ACCOUNTANT]: [
+    PERMISSIONS.VIEW_REPORTS,
+    PERMISSIONS.MANAGE_FINANCE,
+    PERMISSIONS.MANAGE_EXPENSES,
+    PERMISSIONS.VIEW_THEATRE_ANALYTICS,
+    PERMISSIONS.VIEW_OWNER_DASHBOARD,
+  ],
+  [ROLES.MARKETING]: [
+    PERMISSIONS.MANAGE_OFFERS,
+    PERMISSIONS.MANAGE_COUPONS,
+    PERMISSIONS.VIEW_REPORTS,
+  ],
+  [ROLES.EMPLOYEE]: [
+    PERMISSIONS.POS_BOOK,
+    PERMISSIONS.POS_REPRINT,
+    PERMISSIONS.SEARCH_CUSTOMERS,
+  ],
   [ROLES.CUSTOMER]: [
     PERMISSIONS.BOOK_TICKETS,
     PERMISSIONS.WRITE_REVIEWS,
@@ -93,3 +236,35 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
   [ROLES.GUEST]: [PERMISSIONS.BOOK_TICKETS],
 };
+
+export const STAFF_ROLES: Role[] = [
+  ROLES.MANAGER,
+  ROLES.COUNTER_STAFF,
+  ROLES.TICKET_CHECKER,
+  ROLES.ACCOUNTANT,
+  ROLES.MARKETING,
+  ROLES.EMPLOYEE,
+];
+
+/**
+ * Resolve effective permissions.
+ * For staff roles: if `customPermissions` is an array (assigned ACL), that list is authoritative.
+ * Otherwise fall back to role defaults. Owners/admins always use role + optional extras.
+ */
+export function resolvePermissions(
+  role: Role,
+  customPermissions?: string[] | null
+): Permission[] {
+  const valid = (list: string[]) =>
+    list.filter((p): p is Permission =>
+      Object.values(PERMISSIONS).includes(p as Permission)
+    );
+
+  if (STAFF_ROLES.includes(role) && Array.isArray(customPermissions)) {
+    return [...new Set(valid(customPermissions))];
+  }
+
+  const base = ROLE_PERMISSIONS[role] || [];
+  const custom = valid(customPermissions || []);
+  return [...new Set([...base, ...custom])];
+}

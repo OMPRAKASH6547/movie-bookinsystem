@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   LayoutDashboard,
   Clapperboard,
@@ -8,29 +9,92 @@ import {
   Users,
   BarChart3,
   IndianRupee,
+  Building2,
+  Film,
+  MonitorSmartphone,
+  ScanLine,
+  FileSpreadsheet,
+  Wallet,
+  Activity,
+  Trophy,
+  UserRoundSearch,
 } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/layout/header";
+import { TheatrePermissionGate } from "@/components/auth/permission-gate";
+import { useAuthStore } from "@/stores/auth.store";
+import { filterTheatreNav, type TheatreNavKey } from "@/lib/theatre/nav";
+import { ROLES } from "@/constants/roles";
 
-const NAV = [
-  { href: "/theatre", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
-  { href: "/theatre/screens", label: "Screens", icon: <Clapperboard className="h-4 w-4" /> },
-  { href: "/theatre/seats", label: "Seat layout", icon: <Armchair className="h-4 w-4" /> },
-  { href: "/theatre/shows", label: "Shows", icon: <CalendarClock className="h-4 w-4" /> },
-  { href: "/theatre/pricing", label: "Pricing", icon: <IndianRupee className="h-4 w-4" /> },
-  { href: "/theatre/staff", label: "Staff", icon: <Users className="h-4 w-4" /> },
-  { href: "/theatre/analytics", label: "Analytics", icon: <BarChart3 className="h-4 w-4" /> },
-];
+const ICONS: Record<TheatreNavKey, React.ReactNode> = {
+  overview: <LayoutDashboard className="h-4 w-4" />,
+  theatres: <Building2 className="h-4 w-4" />,
+  screens: <Clapperboard className="h-4 w-4" />,
+  seats: <Armchair className="h-4 w-4" />,
+  movies: <Film className="h-4 w-4" />,
+  shows: <CalendarClock className="h-4 w-4" />,
+  pricing: <IndianRupee className="h-4 w-4" />,
+  pos: <MonitorSmartphone className="h-4 w-4" />,
+  customers: <UserRoundSearch className="h-4 w-4" />,
+  verify: <ScanLine className="h-4 w-4" />,
+  staff: <Users className="h-4 w-4" />,
+  performance: <Trophy className="h-4 w-4" />,
+  activity: <Activity className="h-4 w-4" />,
+  revenue: <BarChart3 className="h-4 w-4" />,
+  reports: <FileSpreadsheet className="h-4 w-4" />,
+  finance: <Wallet className="h-4 w-4" />,
+  analytics: <BarChart3 className="h-4 w-4" />,
+};
 
 export default function TheatreLayout({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((s) => s.user);
+
+  const nav = useMemo(() => {
+    const items = filterTheatreNav(user?.permissions, user?.role);
+    return items.map((item) => ({
+      href: item.href,
+      label: item.label,
+      icon: ICONS[item.key],
+      exact: item.exact,
+    }));
+  }, [user?.permissions, user?.role]);
+
+  const title =
+    user?.role === ROLES.THEATRE_OWNER
+      ? "Theatre Owner"
+      : user?.role === ROLES.COUNTER_STAFF
+        ? "Counter Staff"
+        : user?.role === ROLES.TICKET_CHECKER
+          ? "Ticket Checker"
+          : user?.role === ROLES.ACCOUNTANT
+            ? "Finance"
+            : user?.role === ROLES.MANAGER
+              ? "Manager"
+              : "Theatre";
+
   return (
     <div className="min-h-svh flex flex-col">
       <div className="lg:hidden">
         <Header />
+        {nav.length > 0 && (
+          <div className="flex gap-1 overflow-x-auto border-b border-border px-2 py-2 bg-card/60">
+            {nav.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex flex-1">
-        <DashboardSidebar items={NAV} title="Theatre" />
-        <main className="flex-1 p-4 md:p-8 overflow-auto">{children}</main>
+        <DashboardSidebar items={nav} title={title} />
+        <main className="flex-1 p-4 md:p-8 overflow-auto">
+          <TheatrePermissionGate>{children}</TheatrePermissionGate>
+        </main>
       </div>
     </div>
   );

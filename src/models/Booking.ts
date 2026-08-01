@@ -8,12 +8,14 @@ export interface IBooking extends Document {
   showId: mongoose.Types.ObjectId;
   movieId: mongoose.Types.ObjectId;
   theatreId: mongoose.Types.ObjectId;
+  ownerId?: mongoose.Types.ObjectId;
   seats: {
     seatId: string;
     row: string;
     number: number;
     type: string;
     price: number;
+    cancelled?: boolean;
   }[];
   totalAmount: number;
   discount: number;
@@ -23,7 +25,18 @@ export interface IBooking extends Document {
   status: BookingStatus;
   paymentId?: mongoose.Types.ObjectId;
   qrCode?: string;
+  barcode?: string;
   pdfUrl?: string;
+  channel: "online" | "pos" | "walkin";
+  paymentMethod?: string;
+  splitPayments?: { method: string; amount: number }[];
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  staffId?: mongoose.Types.ObjectId;
+  counterId?: string;
+  printCount?: number;
+  checkedInAt?: Date;
   lockedUntil?: Date;
   cancelledAt?: Date;
   cancelReason?: string;
@@ -38,7 +51,8 @@ const BookingSchema = new Schema<IBooking>(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     showId: { type: Schema.Types.ObjectId, ref: "Show", required: true, index: true },
     movieId: { type: Schema.Types.ObjectId, ref: "Movie", required: true },
-    theatreId: { type: Schema.Types.ObjectId, ref: "Theatre", required: true },
+    theatreId: { type: Schema.Types.ObjectId, ref: "Theatre", required: true, index: true },
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     seats: [
       {
         seatId: String,
@@ -46,6 +60,7 @@ const BookingSchema = new Schema<IBooking>(
         number: Number,
         type: { type: String, enum: Object.values(SEAT_TYPES) },
         price: Number,
+        cancelled: { type: Boolean, default: false },
       },
     ],
     totalAmount: { type: Number, required: true },
@@ -61,7 +76,23 @@ const BookingSchema = new Schema<IBooking>(
     },
     paymentId: { type: Schema.Types.ObjectId, ref: "Payment" },
     qrCode: String,
+    barcode: String,
     pdfUrl: String,
+    channel: {
+      type: String,
+      enum: ["online", "pos", "walkin"],
+      default: "online",
+      index: true,
+    },
+    paymentMethod: String,
+    splitPayments: [{ method: String, amount: Number }],
+    customerName: String,
+    customerPhone: String,
+    customerEmail: String,
+    staffId: { type: Schema.Types.ObjectId, ref: "User", index: true },
+    counterId: String,
+    printCount: { type: Number, default: 0 },
+    checkedInAt: Date,
     lockedUntil: Date,
     cancelledAt: Date,
     cancelReason: String,
@@ -73,6 +104,9 @@ const BookingSchema = new Schema<IBooking>(
 BookingSchema.index({ userId: 1, createdAt: -1 });
 BookingSchema.index({ status: 1, createdAt: -1 });
 BookingSchema.index({ theatreId: 1, createdAt: -1 });
+BookingSchema.index({ ownerId: 1, createdAt: -1 });
+BookingSchema.index({ channel: 1, createdAt: -1 });
+BookingSchema.index({ staffId: 1, createdAt: -1 });
 
 export const Booking: Model<IBooking> =
   mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema);

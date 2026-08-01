@@ -18,7 +18,7 @@ const NAV = [
   { href: "/wishlist", label: "Wishlist", icon: <Heart className="h-4 w-4" /> },
   { href: "/wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
   { href: "/profile", label: "Profile", icon: <User className="h-4 w-4" /> },
-  { href: "/dashboard#notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
+  { href: "/notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
   { href: "/#faq", label: "Help center", icon: <HelpCircle className="h-4 w-4" /> },
 ];
 
