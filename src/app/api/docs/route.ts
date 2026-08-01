@@ -128,6 +128,53 @@ const openApi = {
         responses: { "200": { description: "Discount" } },
       },
     },
+    "/bookings/checkout": {
+      post: {
+        tags: ["Bookings", "Payments"],
+        summary: "Checkout — PayU redirect or instant confirm with QR",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Confirmed booking or PayU form params" } },
+      },
+    },
+    "/bookings/my": {
+      get: {
+        tags: ["Bookings"],
+        summary: "List my bookings (Mongo + demo tickets)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Booking list with QR" } },
+      },
+    },
+    "/bookings/{id}/ticket": {
+      get: {
+        tags: ["Bookings"],
+        summary: "Get ticket with QR data URL",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Ticket" } },
+      },
+    },
+    "/bookings/{id}/pdf": {
+      get: {
+        tags: ["Bookings"],
+        summary: "Download PDF ticket (QR embedded)",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "application/pdf" } },
+      },
+    },
+    "/payments/payu/success": {
+      post: {
+        tags: ["Payments"],
+        summary: "PayU success callback",
+        responses: { "302": { description: "Redirect to ticket" } },
+      },
+    },
+    "/wallet": {
+      get: {
+        tags: ["Payments"],
+        summary: "Wallet balance + transactions",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Wallet" } },
+      },
+    },
     "/admin/stats": {
       get: {
         tags: ["Admin"],
@@ -137,6 +184,7 @@ const openApi = {
       },
     },
   },
+
   components: {
     securitySchemes: {
       bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },

@@ -211,6 +211,9 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
       }
 
       const bookingId = result.booking?._id;
+      if (result.booking && typeof window !== "undefined") {
+        localStorage.setItem("cinepass-last-ticket", JSON.stringify(result.booking));
+      }
       toast.success("Payment successful! Your QR ticket is ready.");
       clear();
       router.push(bookingId ? `/bookings/${bookingId}` : "/bookings");

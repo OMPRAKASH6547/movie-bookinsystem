@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Star, Clock, Calendar, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MovieReviews } from "@/components/movies/reviews";
 import { SEED_MOVIES } from "@/data/movies";
 import { formatDuration, formatDate } from "@/utils/format";
 import { APP_NAME } from "@/constants";
@@ -136,6 +137,8 @@ export default async function MovieDetailPage({ params }: Props) {
                   </ul>
                 </div>
               </div>
+
+              <MovieReviews movieId={movie._id} />
             </div>
           </div>
         </div>

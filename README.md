@@ -32,6 +32,25 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+### Book → QR → PDF (works offline)
+
+1. Open any movie → **Book tickets**
+2. Pick theatre, date, seats → pay (**PayU** or demo UPI/Card/Wallet)
+3. You land on **`/bookings/[id]`** with a real scannable QR
+4. Click **Download PDF** (QR embedded in the PDF)
+
+Without `PAYU_MERCHANT_KEY` / `PAYU_MERCHANT_SALT`, PayU falls back to instant confirmation and still issues a QR ticket.
+
+### PayU Money
+
+```env
+PAYU_MERCHANT_KEY=your_key
+PAYU_MERCHANT_SALT=your_salt
+PAYU_MODE=test
+```
+
+Success/failure callbacks: `/api/v1/payments/payu/success` · `/api/v1/payments/payu/failure`
+
 ### With MongoDB + seed
 
 ```bash

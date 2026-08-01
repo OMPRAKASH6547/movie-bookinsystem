@@ -16,7 +16,7 @@ type RouteContext = { params: Promise<Record<string, string>> };
 type Handler = (
   req: AuthenticatedRequest,
   context: RouteContext
-) => Promise<NextResponse>;
+) => Promise<NextResponse | Response>;
 
 interface AuthOptions {
   roles?: Role[];
@@ -25,9 +25,16 @@ interface AuthOptions {
 }
 
 export function withAuth(handler: Handler, options: AuthOptions = {}) {
-  return async (req: NextRequest, context: RouteContext): Promise<NextResponse> => {
+  return async (
+    req: NextRequest,
+    context: RouteContext
+  ): Promise<NextResponse | Response> => {
     try {
-      await connectDB();
+      try {
+        await connectDB();
+      } catch {
+        /* Mongo optional for JWT-authenticated demo flows */
+      }
 
       const authHeader = req.headers.get("authorization");
       const cookieToken = req.cookies.get("access_token")?.value;
