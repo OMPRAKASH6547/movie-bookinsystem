@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CinePass — Movie Ticket Booking Platform
 
-## Getting Started
+Production-ready **full-stack Next.js 15** cinema booking SaaS inspired by Netflix + BookMyShow.
 
-First, run the development server:
+Frontend and backend live in **one Next.js project** (App Router UI + `/api/v1` Route Handlers).
+
+## Stack
+
+| Layer | Tech |
+|--------|------|
+| UI | Next.js 15, React 19, TypeScript, Tailwind CSS 4, Radix/ShadCN patterns, Framer Motion |
+| State | Zustand, TanStack Query, React Hook Form + Zod |
+| API | Next.js Route Handlers (REST v1), OpenAPI at `/api/docs` |
+| Data | MongoDB + Mongoose (Repository → Service) |
+| Cache / locks | Redis (ioredis) with in-memory fallback |
+| Auth | JWT access + refresh rotation, RBAC, OTP, guest, httpOnly cookies |
+| Payments | Stripe + demo mode (Razorpay/Wallet/UPI ready) |
+| Ops | Docker Compose, Nginx, PM2, GitHub Actions |
+
+## Quick start
 
 ```bash
+# 1. Install
+npm install
+
+# 2. Env
+cp .env.example .env
+
+# 3. Run (works without Mongo — seed movies are embedded)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### With MongoDB + seed
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Start Mongo (or use Docker Compose)
+docker compose up -d mongo redis
 
-## Learn More
+# Seed users, movies, theatre, shows, coupons
+npm run seed
 
-To learn more about Next.js, take a look at the following resources:
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Seed accounts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Email | Password | Role |
+|--------|----------|------|
+| `super@cinepass.app` | `Password1` | Super Admin |
+| `admin@cinepass.app` | `Password1` | Admin |
+| `owner@cinepass.app` | `Password1` | Theatre Owner |
+| `customer@cinepass.app` | `Password1` | Customer |
 
-## Deploy on Vercel
+## Architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+  app/                 # App Router pages + API routes
+    (public)/          # Landing, movies, booking
+    (auth)/            # Login, register, forgot password
+    (customer)/        # Customer dashboard
+    (admin)/           # Admin panel
+    (theatre)/         # Theatre partner portal
+    (super-admin)/     # Multi-tenant SaaS control plane
+    api/v1/            # Versioned REST API
+  components/          # UI + feature components
+  constants/           # Roles, permissions, config
+  data/                # Seed movie catalogue (offline-capable)
+  lib/                 # DB, Redis, JWT, email, payments, validators
+  models/              # Mongoose schemas
+  repositories/        # Data access (Repository pattern)
+  services/            # Business logic (Service pattern)
+  stores/              # Zustand client stores
+  types/               # Shared TypeScript types
+  middleware.ts        # Security headers + optional auth gate
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Patterns:** Clean Architecture layers, Repository + Service, RBAC permission matrix, DI-friendly singletons (`movieService`, `authService`, …).
+
+## Features
+
+- Landing: hero, trending / now showing / upcoming, cities, offers, genres, theatres, testimonials, FAQ, app CTA, dark/light mode
+- Auth: register, login, guest, OTP, forgot password, refresh rotation, remember me, roles
+- Booking: theatre → date → live seat map → coupon → pay → confirmation
+- Customer: bookings, wallet, wishlist, profile, rewards
+- Admin / Theatre / Super Admin dashboards
+- Seat locking via Redis TTL
+- QR + PDF ticket generation utilities
+- SEO: metadata, sitemap, robots, JSON-LD
+- PWA manifest
+
+## API
+
+| Method | Path | Notes |
+|--------|------|--------|
+| GET | `/api/v1/health` | Health |
+| GET | `/api/docs` | OpenAPI JSON |
+| POST | `/api/v1/auth/register` | Register |
+| POST | `/api/v1/auth/login` | Login |
+| POST | `/api/v1/auth/refresh` | Rotate tokens |
+| POST | `/api/v1/auth/otp` | OTP send/verify |
+| GET | `/api/v1/movies` | Catalogue + filters |
+| GET | `/api/v1/movies/:slug` | Detail |
+| GET | `/api/v1/search?q=` | Search |
+| POST | `/api/v1/bookings/lock` | Lock seats |
+| POST | `/api/v1/bookings` | Create booking |
+| POST | `/api/v1/coupons/validate` | Coupons |
+| GET | `/api/v1/admin/stats` | Admin stats |
+
+Demo coupons: `CINEPASS50`, `STUDENT20`, `WALLET150`
+
+## Docker
+
+```bash
+docker compose up --build
+```
+
+Production profile with Nginx:
+
+```bash
+docker compose --profile production up --build
+```
+
+## Deploy (AWS EC2 + PM2)
+
+1. Provision EC2, install Node 20, Nginx, PM2  
+2. Clone repo, copy `.env` with production secrets  
+3. Point `MONGODB_URI` to Atlas, `REDIS_URL` to ElastiCache  
+4. Run `bash scripts/deploy.sh`  
+5. Put CloudFront in front of Nginx / S3 assets  
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Dev server (Turbopack) |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run seed` | Seed database |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript check |
+
+## Security
+
+- JWT access (15m) + refresh rotation  
+- bcrypt password hashing  
+- Rate limiting on auth / booking / OTP  
+- Helmet-style headers via middleware  
+- Zod validation on inputs  
+- RBAC permission checks on protected routes  
+- Audit log model for sensitive actions  
+
+## License
+
+Proprietary — built for demonstration and production extension.

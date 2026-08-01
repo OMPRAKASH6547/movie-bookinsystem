@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck / Build
+        run: npm run build
+        env:
+          MONGODB_URI: mongodb://localhost:27017/cinepass
+          REDIS_URL: memory
+          JWT_ACCESS_SECRET: ci-access-secret-for-build-only-32
+          JWT_REFRESH_SECRET: ci-refresh-secret-for-build-only-32
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t cinepass:${{ github.sha }} .

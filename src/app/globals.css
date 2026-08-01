@@ -1,26 +1,175 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f4ef;
+  --foreground: #14110f;
+  --card: #ffffff;
+  --card-foreground: #14110f;
+  --primary: #c41e3a;
+  --primary-foreground: #fff7f5;
+  --secondary: #1a2332;
+  --secondary-foreground: #f0ebe3;
+  --muted: #ebe4d8;
+  --muted-foreground: #6b6358;
+  --accent: #d4a017;
+  --accent-foreground: #1a1408;
+  --destructive: #dc2626;
+  --border: #ddd4c5;
+  --ring: #c41e3a;
+  --radius: 0.75rem;
+  --hero-overlay: linear-gradient(105deg, rgba(10, 8, 6, 0.92) 0%, rgba(10, 8, 6, 0.55) 55%, rgba(10, 8, 6, 0.25) 100%);
+  --surface-glow: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(196, 30, 58, 0.18), transparent);
+}
+
+.dark {
+  --background: #0a0908;
+  --foreground: #f3efe8;
+  --card: #141110;
+  --card-foreground: #f3efe8;
+  --primary: #e11d48;
+  --primary-foreground: #fff5f5;
+  --secondary: #1f2937;
+  --secondary-foreground: #e5e7eb;
+  --muted: #1c1816;
+  --muted-foreground: #a89f93;
+  --accent: #f5c518;
+  --accent-foreground: #1a1408;
+  --destructive: #ef4444;
+  --border: #2a241f;
+  --ring: #e11d48;
+  --hero-overlay: linear-gradient(105deg, rgba(8, 6, 5, 0.95) 0%, rgba(8, 6, 5, 0.65) 50%, rgba(8, 6, 5, 0.3) 100%);
+  --surface-glow: radial-gradient(ellipse 70% 45% at 10% 0%, rgba(225, 29, 72, 0.22), transparent);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --radius-lg: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--surface-glow);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.container-page {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .container-page {
+    padding-inline: 2rem;
+  }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.seat {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.35rem 0.35rem 0.15rem 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  transition: transform 0.15s, background 0.15s;
+  cursor: pointer;
+}
+.seat:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.seat-available {
+  background: #2d6a4f;
+  color: white;
+}
+.seat-selected {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.seat-booked,
+.seat-locked {
+  background: #3f3f46;
+  color: #71717a;
+  cursor: not-allowed;
+}
+.seat-premium.seat-available {
+  background: #1d4ed8;
+}
+.seat-recliner.seat-available {
+  background: #7c3aed;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--muted) 25%, color-mix(in oklab, var(--muted) 60%, white) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+.movie-row {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.5rem;
+}
+.movie-row > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
 }
