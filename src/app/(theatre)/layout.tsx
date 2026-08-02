@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/layout/header";
+import { MobileDashMenu } from "@/components/layout/mobile-bottom-nav";
 import { TheatrePermissionGate } from "@/components/auth/permission-gate";
 import { useAuthStore } from "@/stores/auth.store";
 import { filterTheatreNav, type TheatreNavKey } from "@/lib/theatre/nav";
@@ -82,6 +83,7 @@ export default function TheatreLayout({ children }: { children: React.ReactNode 
     <div className="min-h-svh flex flex-col">
       <div className="lg:hidden">
         <Header />
+        <MobileDashMenu items={nav} />
       </div>
       <div className="flex flex-1">
         <DashboardSidebar items={nav} title={title} />

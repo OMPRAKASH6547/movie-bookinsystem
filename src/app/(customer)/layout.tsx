@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/layout/header";
+import { MobileDashMenu } from "@/components/layout/mobile-bottom-nav";
 
 const NAV = [
   { href: "/dashboard", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -27,6 +28,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     <div className="min-h-svh flex flex-col">
       <div className="lg:hidden">
         <Header />
+        <MobileDashMenu items={NAV} />
       </div>
       <div className="flex flex-1">
         <DashboardSidebar items={NAV} title="Customer" />
