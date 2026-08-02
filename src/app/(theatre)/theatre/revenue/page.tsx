@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -20,9 +21,9 @@ export default function RevenuePage() {
   const [preset, setPreset] = useState("today");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [theatres, setTheatres] = useState<any[]>([]);
+  const [theatres, setTheatres] = useState<JsonRecord[]>([]);
   const [theatreId, setTheatreId] = useState("");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<JsonRecord | null>(null);
 
   useEffect(() => {
     api.get("/owner/theatres").then((r) => setTheatres(r.data.data || []));
@@ -110,7 +111,7 @@ export default function RevenuePage() {
       <section>
         <h2 className="font-semibold mb-3">Revenue trend</h2>
         <div className="space-y-2">
-          {(data?.charts?.revenueTrend || []).map((d: any) => (
+          {(data?.charts?.revenueTrend || []).map((d: JsonRecord) => (
             <div key={d.date} className="flex items-center gap-3 text-sm">
               <span className="w-24 text-muted-foreground">{d.date}</span>
               <div className="flex-1 h-2 rounded bg-muted overflow-hidden">
@@ -130,7 +131,7 @@ export default function RevenuePage() {
       <div className="grid md:grid-cols-2 gap-6">
         <section>
           <h2 className="font-semibold mb-3">Movie-wise</h2>
-          {(data?.charts?.movieWise || []).map((x: any) => (
+          {(data?.charts?.movieWise || []).map((x: JsonRecord) => (
             <div key={x.id} className="flex justify-between py-2 border-b border-border text-sm">
               <span>{x.name}</span>
               <span>{formatCurrency(x.revenue)}</span>
@@ -139,7 +140,7 @@ export default function RevenuePage() {
         </section>
         <section>
           <h2 className="font-semibold mb-3">Theatre-wise</h2>
-          {(data?.charts?.theatreWise || []).map((x: any) => (
+          {(data?.charts?.theatreWise || []).map((x: JsonRecord) => (
             <div key={x.id} className="flex justify-between py-2 border-b border-border text-sm">
               <span>{x.name}</span>
               <span>{formatCurrency(x.revenue)}</span>

@@ -1,38 +1,81 @@
 import { NextRequest } from "next/server";
-import { bookingService } from "@/services/booking.service";
+import { promotionService } from "@/services/promotion.service";
 import { successResponse, errorResponse } from "@/utils/api-response";
 import { connectDB } from "@/lib/db/mongodb";
+import { verifyAccessToken } from "@/lib/auth/jwt";
 
 export async function POST(req: NextRequest) {
   try {
-    const { code, amount } = await req.json();
-    if (!code || !amount) return errorResponse("Code and amount required", 422);
+    const body = await req.json();
+    const {
+      code,
+      amount,
+      theatreId,
+      movieId,
+      screenId,
+      showId,
+      seatCategories,
+      paymentMethod,
+      showDateTime,
+      ownerId,
+      autoApply,
+    } = body;
 
-    try {
-      await connectDB();
-      const result = await bookingService.applyCoupon(code, amount);
-      return successResponse(result, "Coupon applied");
-    } catch {
-      // Demo coupons
-      const demos: Record<string, number> = {
-        CINEPASS50: 0.5,
-        BOGOWED: 0.25,
-        WALLET150: 150,
-        STUDENT20: 0.2,
-      };
-      const upper = String(code).toUpperCase();
-      if (!(upper in demos)) return errorResponse("Invalid coupon", 400);
+    if (!amount || amount <= 0) return errorResponse("Valid amount required", 422);
 
-      const val = demos[upper];
-      const discount = val < 1 ? Math.round(amount * val) : Math.min(val, amount);
-      return successResponse({
-        code: upper,
-        discount,
-        finalAmount: amount - discount,
-        description: "Demo coupon",
-        demo: true,
-      });
+    let userId: string | undefined;
+    const authHeader = req.headers.get("authorization");
+    const cookieToken = req.cookies.get("access_token")?.value;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : cookieToken;
+    if (token) {
+      try {
+        userId = verifyAccessToken(token).sub;
+      } catch {
+        /* optional auth */
+      }
     }
+
+    await connectDB();
+    const result = await promotionService.resolve({
+      amount: Number(amount),
+      couponCode: code || undefined,
+      userId,
+      theatreId,
+      movieId,
+      screenId,
+      showId,
+      seatCategories,
+      paymentMethod,
+      showDateTime: showDateTime ? new Date(showDateTime) : undefined,
+      ownerId,
+      channel: "online",
+      // if no code and autoApply requested, still resolve auto offers
+      allowStacking: !!body.allowStacking,
+    });
+
+    // When only validating a blank code for auto offers
+    if (!code && !autoApply && result.discount === 0) {
+      return errorResponse("Code and amount required", 422);
+    }
+
+    return successResponse(
+      {
+        code: result.couponCode,
+        discount: result.discount,
+        finalAmount: result.finalAmount,
+        description: result.labels.join(" · ") || "Promotion applied",
+        labels: result.labels,
+        offerIds: result.offerIds,
+        breakdown: {
+          couponDiscount: result.couponDiscount,
+          offerDiscount: result.offerDiscount,
+          manualDiscount: result.manualDiscount,
+        },
+      },
+      result.discount > 0 ? "Promotion applied" : "No discount"
+    );
   } catch (error) {
     return errorResponse(
       error instanceof Error ? error.message : "Coupon validation failed",

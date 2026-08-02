@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -14,7 +15,7 @@ import { EmptyState } from "@/components/loading/empty-state";
 const PAY_METHODS = ["cash", "card", "upi", "wallet", "split"] as const;
 
 export default function PosPage() {
-  const [shows, setShows] = useState<any[]>([]);
+  const [shows, setShows] = useState<JsonRecord[]>([]);
   const [showId, setShowId] = useState("");
   const [seatInput, setSeatInput] = useState("A1,A2");
   const [method, setMethod] = useState<(typeof PAY_METHODS)[number]>("cash");
@@ -22,13 +23,21 @@ export default function PosPage() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [splitCard, setSplitCard] = useState("");
   const [splitCash, setSplitCash] = useState("");
-  const [last, setLast] = useState<any>(null);
+  const [last, setLast] = useState<JsonRecord | null>(null);
   const [thermalWidth, setThermalWidth] = useState<58 | 80>(80);
   const [cancelId, setCancelId] = useState("");
   const [loadingShows, setLoadingShows] = useState(true);
   const [booking, setBooking] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [manualDiscount, setManualDiscount] = useState("");
+  const [promoPreview, setPromoPreview] = useState<{
+    discount: number;
+    finalAmount: number;
+    description?: string;
+  } | null>(null);
+  const [validating, setValidating] = useState(false);
 
   useEffect(() => {
     api.post("/pos/session", { counterId: "COUNTER-1" }).catch(() => null);
@@ -37,7 +46,7 @@ export default function PosPage() {
       .get("/owner/shows")
       .then((r) => {
         const list = (r.data.data || []).filter(
-          (s: any) => s.isActive !== false && s.status !== "cancelled"
+          (s: JsonRecord) => s.isActive !== false && s.status !== "cancelled"
         );
         setShows(list);
         if (list[0]) setShowId(list[0]._id);
@@ -56,24 +65,54 @@ export default function PosPage() {
       const number = Number(seatId.slice(1)) || 1;
       const type = row <= "B" ? "vip" : row <= "D" ? "premium" : "regular";
       const price =
-        selected?.pricing?.find((p: any) => p.seatType === type)?.price ||
+        selected?.pricing?.find((p: JsonRecord) => p.seatType === type)?.price ||
         selected?.basePrice ||
         220;
       return { seatId, row, number, type, price };
     });
 
   const total = seats.reduce((a, s) => a + s.price, 0);
+  const payable = promoPreview
+    ? Math.round(promoPreview.finalAmount * 1.18)
+    : Math.round(Math.max(0, total - (Number(manualDiscount) || 0)) * 1.18);
+
+  const applyPromo = async () => {
+    if (!total) return;
+    setValidating(true);
+    try {
+      const { data } = await api.post("/coupons/validate", {
+        code: couponCode || undefined,
+        amount: total,
+        theatreId: selected?.theatreId?._id || selected?.theatreId,
+        movieId: selected?.movieId?._id || selected?.movieId,
+        showId,
+        seatCategories: seats.map((s) => s.type),
+        paymentMethod: method === "split" ? "cash" : method,
+        showDateTime: selected?.startTime,
+        autoApply: !couponCode,
+      });
+      setPromoPreview(data.data);
+      toast.success(data.data.description || "Promotion applied");
+    } catch (err: unknown) {
+      setPromoPreview(null);
+      toast.error(apiErrorMessage(err, "Invalid coupon"));
+    } finally {
+      setValidating(false);
+    }
+  };
 
   const book = async () => {
     setBooking(true);
     try {
-      const payload: any = {
+      const payload: JsonRecord = {
         showId,
         seats,
         paymentMethod: method,
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
         counterId: "COUNTER-1",
+        couponCode: couponCode || undefined,
+        discount: Number(manualDiscount) || undefined,
       };
       if (method === "split") {
         payload.splitPayments = [
@@ -83,9 +122,12 @@ export default function PosPage() {
       }
       const { data } = await api.post("/pos/book", payload);
       setLast(data.data);
+      setPromoPreview(null);
+      setCouponCode("");
+      setManualDiscount("");
       toast.success("Ticket booked");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Booking failed");
+    } catch (err: unknown) {
+      toast.error(apiErrorMessage(err, "Booking failed"));
     } finally {
       setBooking(false);
     }
@@ -164,8 +206,38 @@ export default function PosPage() {
             </div>
           )}
 
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <Input
+              placeholder="Coupon code"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={applyPromo}
+              loading={validating}
+              loadingText="…"
+            >
+              Apply
+            </Button>
+          </div>
+          <Input
+            placeholder="Manual discount (₹)"
+            value={manualDiscount}
+            onChange={(e) => setManualDiscount(e.target.value)}
+          />
+          {promoPreview && (
+            <p className="text-xs text-primary">
+              Discount {formatCurrency(promoPreview.discount)} · {promoPreview.description}
+            </p>
+          )}
+
           <div className="flex items-center justify-between pt-2">
-            <p className="font-semibold">{formatCurrency(Math.round(total * 1.18))}</p>
+            <div>
+              <p className="text-xs text-muted-foreground">Gross {formatCurrency(total)}</p>
+              <p className="font-semibold">{formatCurrency(payable)} incl. tax</p>
+            </div>
             <Button
               onClick={book}
               disabled={!showId || !seats.length}
@@ -184,7 +256,7 @@ export default function PosPage() {
             <>
               <p className="font-medium">{last.bookingNumber}</p>
               <p className="text-sm text-muted-foreground">
-                {last.movie?.title} · {last.seats?.map((s: any) => s.seatId).join(", ")}
+                {last.movie?.title} · {last.seats?.map((s: JsonRecord) => s.seatId).join(", ")}
               </p>
               <p className="text-accent font-semibold">{formatCurrency(last.finalAmount)}</p>
               {last.qrCode && (
@@ -260,8 +332,8 @@ export default function PosPage() {
                 try {
                   await api.post("/pos/cancel", { bookingId: cancelId || last?._id });
                   toast.success("Cancelled & refunded");
-                } catch (err: any) {
-                  toast.error(err?.response?.data?.message || "Cancel failed");
+                } catch (err: unknown) {
+                  toast.error(apiErrorMessage(err, "Cancel failed"));
                 } finally {
                   setCancelling(false);
                 }

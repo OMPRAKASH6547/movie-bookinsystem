@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -10,7 +11,7 @@ import { toast } from "sonner";
 
 export default function TicketVerifyPage() {
   const [code, setCode] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<JsonRecord | null>(null);
 
   const verify = async (exit = false) => {
     try {
@@ -18,8 +19,8 @@ export default function TicketVerifyPage() {
       setResult(data.data);
       if (data.data.result === "valid") toast.success(data.data.message);
       else toast.error(data.data.message || data.data.result);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Verify failed");
+    } catch (err: unknown) {
+      toast.error(apiErrorMessage(err, "Verify failed"));
     }
   };
 
@@ -59,8 +60,8 @@ export default function TicketVerifyPage() {
                 <p className="text-sm text-muted-foreground">
                   Seats:{" "}
                   {result.booking.seats
-                    ?.filter((s: any) => !s.cancelled)
-                    .map((s: any) => s.seatId)
+                    ?.filter((s: JsonRecord) => !s.cancelled)
+                    .map((s: JsonRecord) => s.seatId)
                     .join(", ")}
                 </p>
                 {result.entryAt && (

@@ -22,6 +22,15 @@ export interface IBooking extends Document {
   tax: number;
   finalAmount: number;
   couponCode?: string;
+  offerIds?: mongoose.Types.ObjectId[];
+  discountBreakdown?: {
+    couponDiscount: number;
+    offerDiscount: number;
+    manualDiscount: number;
+    labels: string[];
+  };
+  shift?: string;
+  screenId?: mongoose.Types.ObjectId;
   status: BookingStatus;
   paymentId?: mongoose.Types.ObjectId;
   qrCode?: string;
@@ -68,6 +77,15 @@ const BookingSchema = new Schema<IBooking>(
     tax: { type: Number, default: 0 },
     finalAmount: { type: Number, required: true },
     couponCode: String,
+    offerIds: [{ type: Schema.Types.ObjectId, ref: "Offer" }],
+    discountBreakdown: {
+      couponDiscount: { type: Number, default: 0 },
+      offerDiscount: { type: Number, default: 0 },
+      manualDiscount: { type: Number, default: 0 },
+      labels: [String],
+    },
+    shift: String,
+    screenId: { type: Schema.Types.ObjectId, ref: "Screen" },
     status: {
       type: String,
       enum: Object.values(BOOKING_STATUS),

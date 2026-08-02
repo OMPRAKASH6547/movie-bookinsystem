@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -22,8 +23,8 @@ const ACTIONS = [
 ];
 
 export default function StaffActivityPage() {
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<JsonRecord[]>([]);
+  const [logs, setLogs] = useState<JsonRecord[]>([]);
   const [tab, setTab] = useState<"sessions" | "logs">("logs");
   const [action, setAction] = useState("");
   const [from, setFrom] = useState("");

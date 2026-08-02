@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
@@ -6,7 +7,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 
 export default function AdminAuditPage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<JsonRecord[]>([]);
 
   useEffect(() => {
     api.get("/admin/audit").then((res) => setItems(res.data.data || []));

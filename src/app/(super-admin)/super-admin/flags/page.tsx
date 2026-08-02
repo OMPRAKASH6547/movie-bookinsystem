@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,7 +9,7 @@ import { api } from "@/lib/api/client";
 import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function FlagsPage() {
-  const [flags, setFlags] = useState<any[]>([]);
+  const [flags, setFlags] = useState<JsonRecord[]>([]);
 
   const load = async () => {
     const { data } = await api.get("/super-admin/flags");

@@ -9,6 +9,8 @@ import { Theatre } from "@/models/Theatre";
 import { Show } from "@/models/Show";
 import { User } from "@/models/User";
 
+export const runtime = "nodejs";
+
 export const GET = withAuth(async (req: AuthenticatedRequest, context) => {
   try {
     const { id } = await context.params;
@@ -39,10 +41,21 @@ export const GET = withAuth(async (req: AuthenticatedRequest, context) => {
       });
     }
 
+    // Demo / non-ObjectId ids never hit Mongo (avoids CastError)
+    const isObjectId = /^[a-f\d]{24}$/i.test(id);
+    if (!isObjectId) {
+      return errorResponse("Booking not found", 404);
+    }
+
     await connectDB();
     const booking = await Booking.findById(id);
     if (!booking) return errorResponse("Booking not found", 404);
-    if (booking.userId.toString() !== req.user.sub) {
+
+    const isOwner = booking.userId.toString() === req.user.sub;
+    const isStaff = ["admin", "super_admin", "theatre_owner", "manager", "counter_staff"].includes(
+      req.user.role
+    );
+    if (!isOwner && !isStaff) {
       return errorResponse("Unauthorized", 403);
     }
 

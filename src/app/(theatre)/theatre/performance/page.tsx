@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -12,8 +13,8 @@ import { EmptyState } from "@/components/loading/empty-state";
 import { ErrorState } from "@/components/loading/error-state";
 
 export default function PerformancePage() {
-  const [rows, setRows] = useState<any[]>([]);
-  const [theatres, setTheatres] = useState<any[]>([]);
+  const [rows, setRows] = useState<JsonRecord[]>([]);
+  const [theatres, setTheatres] = useState<JsonRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [filters, setFilters] = useState({

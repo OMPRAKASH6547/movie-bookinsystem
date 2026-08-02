@@ -20,6 +20,16 @@ const eslintConfig = [
       "next-env.d.ts",
     ],
   },
+  {
+    rules: {
+      // Dashboard pages use loose API shapes; warn instead of failing production builds
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;

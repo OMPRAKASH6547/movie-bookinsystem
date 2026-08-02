@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -9,10 +10,10 @@ import { api } from "@/lib/api/client";
 import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function TheatreShowsPage() {
-  const [shows, setShows] = useState<any[]>([]);
-  const [movies, setMovies] = useState<any[]>([]);
-  const [screens, setScreens] = useState<any[]>([]);
-  const [theatres, setTheatres] = useState<any[]>([]);
+  const [shows, setShows] = useState<JsonRecord[]>([]);
+  const [movies, setMovies] = useState<JsonRecord[]>([]);
+  const [screens, setScreens] = useState<JsonRecord[]>([]);
+  const [theatres, setTheatres] = useState<JsonRecord[]>([]);
   const [movieId, setMovieId] = useState("");
   const [screenId, setScreenId] = useState("");
   const [theatreId, setTheatreId] = useState("");
@@ -150,8 +151,8 @@ export default function TheatreShowsPage() {
               });
               toast.success("Shows created");
               load();
-            } catch (e: any) {
-              toast.error(e?.response?.data?.message || "Create failed");
+            } catch (e: unknown) {
+              toast.error(apiErrorMessage(e, "Create failed"));
             }
           }}
         >

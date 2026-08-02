@@ -6,6 +6,8 @@ export { Show } from "./Show";
 export { Booking } from "./Booking";
 export { Payment } from "./Payment";
 export { Coupon } from "./Coupon";
+export { Offer } from "./Offer";
+export { CouponRedemption } from "./CouponRedemption";
 export { Review } from "./Review";
 export { Wallet, Transaction } from "./Wallet";
 export { Notification } from "./Notification";

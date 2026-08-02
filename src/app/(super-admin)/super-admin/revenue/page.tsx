@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -17,7 +18,7 @@ const PRESETS = [
 
 export default function PlatformRevenuePage() {
   const [preset, setPreset] = useState("month");
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<JsonRecord | null>(null);
 
   useEffect(() => {
     api.get("/super-admin/revenue", { params: { preset } }).then((r) => setData(r.data.data));
@@ -60,7 +61,7 @@ export default function PlatformRevenuePage() {
       <section>
         <h2 className="font-semibold text-lg mb-4">Theatre breakdown</h2>
         <div className="space-y-2">
-          {(data?.theatreBreakdown || []).map((t: any) => (
+          {(data?.theatreBreakdown || []).map((t: JsonRecord) => (
             <div
               key={t.id}
               className="rounded-xl border border-border p-4 flex justify-between gap-3"

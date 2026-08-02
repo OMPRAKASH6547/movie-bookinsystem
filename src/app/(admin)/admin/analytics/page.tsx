@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import {
@@ -16,8 +17,8 @@ import { formatCurrency } from "@/utils/format";
 import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function AdminAnalyticsPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [weekly, setWeekly] = useState<any[]>([]);
+  const [stats, setStats] = useState<JsonRecord | null>(null);
+  const [weekly, setWeekly] = useState<JsonRecord[]>([]);
 
   useEffect(() => {
     Promise.all([api.get("/admin/stats"), api.get("/theatre/analytics")])

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api/client";
 import { formatCurrency } from "@/utils/format";
 import { useAuthStore } from "@/stores/auth.store";
+import { downloadTicketPdf } from "@/lib/download-ticket";
 
 interface Ticket {
   _id: string;
@@ -80,16 +81,14 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     if (!ticket) return;
     setDownloading(true);
     try {
-      const res = await api.get(`/bookings/${ticket._id}/pdf`, { responseType: "blob" });
-      const url = URL.createObjectURL(res.data);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ticket-${ticket.bookingNumber}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadTicketPdf(ticket._id, ticket.bookingNumber);
       toast.success("PDF downloaded");
-    } catch {
-      toast.error("PDF download failed — try again after signing in");
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "PDF download failed — try again after signing in"
+      );
     } finally {
       setDownloading(false);
     }

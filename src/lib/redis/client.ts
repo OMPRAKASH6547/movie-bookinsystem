@@ -1,7 +1,19 @@
 import Redis from "ioredis";
 
 let redis: Redis | null = null;
-const memoryStore = new Map<string, { value: string; expiry?: number }>();
+
+type MemoryEntry = { value: string; expiry?: number };
+
+/** Shared across Next.js route bundles / HMR (module-level Map is not). */
+function getMemoryStore(): Map<string, MemoryEntry> {
+  const g = globalThis as typeof globalThis & {
+    __cinepassMemoryStore?: Map<string, MemoryEntry>;
+  };
+  if (!g.__cinepassMemoryStore) {
+    g.__cinepassMemoryStore = new Map();
+  }
+  return g.__cinepassMemoryStore;
+}
 
 function getRedisUrl(): string {
   return process.env.REDIS_URL || "redis://localhost:6379";
@@ -38,10 +50,11 @@ export const cache = {
     } catch {
       /* memory fallback */
     }
-    const item = memoryStore.get(key);
+    const store = getMemoryStore();
+    const item = store.get(key);
     if (!item) return null;
     if (item.expiry && Date.now() > item.expiry) {
-      memoryStore.delete(key);
+      store.delete(key);
       return null;
     }
     return item.value;
@@ -58,7 +71,7 @@ export const cache = {
     } catch {
       /* memory fallback */
     }
-    memoryStore.set(key, {
+    getMemoryStore().set(key, {
       value,
       expiry: ttlSeconds ? Date.now() + ttlSeconds * 1000 : undefined,
     });
@@ -74,7 +87,7 @@ export const cache = {
     } catch {
       /* memory fallback */
     }
-    memoryStore.delete(key);
+    getMemoryStore().delete(key);
   },
 
   async incr(key: string): Promise<number> {
@@ -84,8 +97,9 @@ export const cache = {
     } catch {
       /* memory fallback */
     }
-    const current = Number(memoryStore.get(key)?.value || 0) + 1;
-    memoryStore.set(key, { value: String(current) });
+    const store = getMemoryStore();
+    const current = Number(store.get(key)?.value || 0) + 1;
+    store.set(key, { value: String(current) });
     return current;
   },
 };

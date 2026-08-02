@@ -2,9 +2,14 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { NavigationProgress } from "@/components/loading/navigation-progress";
+import { MobileShell } from "@/components/layout/mobile-shell";
+import {
+  InstallPrompt,
+  registerServiceWorker,
+} from "@/components/pwa/install-prompt";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -28,13 +33,18 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       })
   );
 
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <QueryClientProvider client={queryClient}>
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>
-        {children}
+        <MobileShell>{children}</MobileShell>
+        <InstallPrompt />
         <Toaster richColors position="top-right" theme="system" />
       </QueryClientProvider>
     </ThemeProvider>

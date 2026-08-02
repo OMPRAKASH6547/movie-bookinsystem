@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -13,9 +13,12 @@ import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { api } from "@/lib/api/client";
 import { useAuthStore } from "@/stores/auth.store";
 import { APP_NAME } from "@/constants";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next");
   const setAuth = useAuthStore((s) => s.setAuth);
   const [otpMode, setOtpMode] = useState(false);
   const [phone, setPhone] = useState("");
@@ -40,6 +43,13 @@ export default function LoginPage() {
       toast.success("Welcome back!");
       const loggedIn = res.data.data.user;
       const role = loggedIn.role;
+
+      // Honor safe post-login redirect (e.g. middleware ?next=)
+      if (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")) {
+        router.push(nextPath);
+        return;
+      }
+
       if (role === "super_admin") router.push("/super-admin");
       else if (role === "admin") router.push("/admin");
       else if (
@@ -232,5 +242,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-muted-foreground">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

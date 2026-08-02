@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -9,7 +10,7 @@ import { api } from "@/lib/api/client";
 import { toast } from "sonner";
 
 export default function OwnerMoviesPage() {
-  const [movies, setMovies] = useState<any[]>([]);
+  const [movies, setMovies] = useState<JsonRecord[]>([]);
   const [form, setForm] = useState({
     title: "",
     duration: "150",
@@ -49,8 +50,8 @@ export default function OwnerMoviesPage() {
             });
             toast.success("Movie added");
             load();
-          } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Failed");
+          } catch (err: unknown) {
+            toast.error(apiErrorMessage(err, "Failed"));
           }
         }}
       >

@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -33,8 +34,8 @@ const COLORS = ["#c9a227", "#e11d48", "#0ea5e9", "#22c55e", "#a855f7"];
 export default function TheatreDashboard() {
   const { permissions, user } = usePermissions();
   const router = useRouter();
-  const [data, setData] = useState<any>(null);
-  const [staffToday, setStaffToday] = useState<any[]>([]);
+  const [data, setData] = useState<JsonRecord | null>(null);
+  const [staffToday, setStaffToday] = useState<JsonRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
 
@@ -113,7 +114,7 @@ export default function TheatreDashboard() {
         <div className="grid lg:grid-cols-2 gap-6">
           <section className="rounded-xl border border-border p-4 h-72">
             <h3 className="font-semibold mb-3">Revenue by hour</h3>
-            {(w.revenueByHour || []).some((h: any) => h.revenue > 0) ? (
+            {(w.revenueByHour || []).some((h: JsonRecord) => h.revenue > 0) ? (
               <ResponsiveContainer width="100%" height="85%">
                 <BarChart data={w.revenueByHour || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -140,11 +141,13 @@ export default function TheatreDashboard() {
                     outerRadius={90}
                     label
                   >
-                    {(w.revenueByPaymentMethod || []).map((_: any, i: number) => (
+                    {(w.revenueByPaymentMethod || []).map((_: JsonRecord, i: number) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                  <Tooltip
+                    formatter={(v) => formatCurrency(typeof v === "number" ? v : Number(v) || 0)}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

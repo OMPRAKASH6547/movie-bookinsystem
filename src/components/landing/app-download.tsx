@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 import { Smartphone } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/constants";
+import { InstallAppButton } from "@/components/pwa/install-prompt";
 
 export function AppDownload() {
   return (
@@ -21,19 +21,10 @@ export function AppDownload() {
               Take {APP_NAME} with you
             </h2>
             <p className="text-secondary-foreground/70 mb-6">
-              Scan QR tickets at the gate, get show reminders, and lock seats on the go.
+              Install as an app for home-screen access, faster booking, and QR tickets at the gate.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="accent" size="lg">
-                App Store
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                Google Play
-              </Button>
+            <div className="flex flex-wrap gap-3 items-start">
+              <InstallAppButton size="lg" variant="accent" label="Install as app" />
             </div>
           </div>
           <div className="relative flex h-40 w-40 items-center justify-center rounded-3xl bg-primary/20 border border-white/10">

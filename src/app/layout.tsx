@@ -46,6 +46,19 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: APP_NAME,
+  },
+  applicationName: APP_NAME,
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {

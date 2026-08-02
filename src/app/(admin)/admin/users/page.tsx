@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -10,7 +11,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 const ROLES = ["customer", "admin", "theatre_owner", "manager", "employee", "guest"];
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<JsonRecord[]>([]);
   const [role, setRole] = useState("");
 
   const load = async () => {

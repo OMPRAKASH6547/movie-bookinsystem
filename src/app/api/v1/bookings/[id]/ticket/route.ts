@@ -16,6 +16,10 @@ export const GET = withAuth(async (req: AuthenticatedRequest, context) => {
       return successResponse(demo);
     }
 
+    if (!/^[a-f\d]{24}$/i.test(id)) {
+      return errorResponse("Ticket not found", 404);
+    }
+
     try {
       await connectDB();
       const booking = await Booking.findById(id)

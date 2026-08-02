@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -10,15 +11,14 @@ import { formatCurrency } from "@/utils/format";
 import { toast } from "sonner";
 import { StatGridSkeleton, ListSkeleton } from "@/components/loading/skeletons";
 import { ErrorState } from "@/components/loading/error-state";
-import { EmptyState } from "@/components/loading/empty-state";
 
 export default function FinancePage() {
   const [tab, setTab] = useState<"gst" | "settlement" | "expenses" | "cash">("gst");
-  const [gst, setGst] = useState<any>(null);
-  const [settlement, setSettlement] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [closings, setClosings] = useState<any[]>([]);
-  const [theatres, setTheatres] = useState<any[]>([]);
+  const [gst, setGst] = useState<JsonRecord | null>(null);
+  const [settlement, setSettlement] = useState<JsonRecord[]>([]);
+  const [expenses, setExpenses] = useState<JsonRecord[]>([]);
+  const [closings, setClosings] = useState<JsonRecord[]>([]);
+  const [theatres, setTheatres] = useState<JsonRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);

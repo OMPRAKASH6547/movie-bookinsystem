@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -9,8 +10,8 @@ import { formatCurrency } from "@/utils/format";
 import { toast } from "sonner";
 
 export default function ReportsPage() {
-  const [theatres, setTheatres] = useState<any[]>([]);
-  const [rows, setRows] = useState<any[]>([]);
+  const [theatres, setTheatres] = useState<JsonRecord[]>([]);
+  const [rows, setRows] = useState<JsonRecord[]>([]);
   const [filters, setFilters] = useState({
     theatreId: "",
     paymentMethod: "",

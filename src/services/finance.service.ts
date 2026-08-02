@@ -128,6 +128,7 @@ export class FinanceService {
       openingCash: number;
       closingCash: number;
       note?: string;
+      shift?: string;
     }
   ) {
     await connectDB();
@@ -189,6 +190,12 @@ export class FinanceService {
       upiSales,
       walletSales,
       refunds: refundTotal,
+      discounts: 0,
+      couponsUsed: 0,
+      ticketsSold: 0,
+      handoverStatus: "submitted",
+      handedOverAt: new Date(),
+      shift: data.shift || "full_day",
       note: data.note,
     });
   }
@@ -244,7 +251,7 @@ export class FinanceService {
 
     if (opts.format === "csv") {
       const header =
-        "Booking,Date,Theatre,Movie,Channel,Payment,Seats,Amount,Tax,Status,Staff";
+        "Booking,Date,Theatre,Movie,Channel,Payment,Seats,Gross,Discount,Coupon,Amount,Tax,Status,Staff,Refund,CancelledAt";
       const lines = rows.map((b) =>
         [
           b.bookingNumber,
@@ -254,10 +261,15 @@ export class FinanceService {
           b.channel,
           b.paymentMethod || "",
           b.seats?.length || 0,
+          b.totalAmount,
+          b.discount || 0,
+          b.couponCode || "",
           b.finalAmount,
           b.tax,
           b.status,
           (b.staffId as { name?: string })?.name || "",
+          b.refundAmount || 0,
+          b.cancelledAt ? new Date(b.cancelledAt).toISOString() : "",
         ].join(",")
       );
       return { csv: [header, ...lines].join("\n"), count: rows.length };

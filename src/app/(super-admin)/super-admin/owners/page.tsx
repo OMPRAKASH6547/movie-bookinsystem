@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -9,7 +10,7 @@ import { api } from "@/lib/api/client";
 import { toast } from "sonner";
 
 export default function OwnersPage() {
-  const [owners, setOwners] = useState<any[]>([]);
+  const [owners, setOwners] = useState<JsonRecord[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [plan, setPlan] = useState("Growth");
@@ -45,8 +46,8 @@ export default function OwnersPage() {
             setName("");
             setEmail("");
             load();
-          } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Failed");
+          } catch (err: unknown) {
+            toast.error(apiErrorMessage(err, "Failed"));
           }
         }}
       >

@@ -1,3 +1,4 @@
+import type { JsonRecord } from "@/types/ui";
 import { connectDB } from "@/lib/db/mongodb";
 import { Booking } from "@/models/Booking";
 import { Show } from "@/models/Show";
@@ -241,18 +242,19 @@ export class OwnerDashboardService {
 
     const bookings = await Booking.find(bookingMatch).lean();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const byStaff = new Map<string, any>();
 
     for (const s of sessions) {
-      const uid = (s.userId as any)?._id?.toString() || s.userId?.toString();
+      const uid = (s.userId as JsonRecord)?._id?.toString() || s.userId?.toString();
       if (!uid) continue;
       byStaff.set(uid, {
         staffId: uid,
-        name: (s.userId as any)?.name || "Staff",
-        role: (s.userId as any)?.role || "—",
+        name: (s.userId as JsonRecord)?.name || "Staff",
+        role: (s.userId as JsonRecord)?.role || "—",
         counterName: s.counterId || "—",
-        theatreName: (s.theatreId as any)?.name || "—",
-        theatreId: (s.theatreId as any)?._id || s.theatreId,
+        theatreName: (s.theatreId as JsonRecord)?.name || "—",
+        theatreId: (s.theatreId as JsonRecord)?._id || s.theatreId,
         loginTime: s.loginAt,
         logoutTime: s.logoutAt || null,
         ticketsBooked: s.ticketsBooked || 0,

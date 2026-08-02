@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -10,7 +11,7 @@ import { formatCurrency } from "@/utils/format";
 import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function TenantsPage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<JsonRecord[]>([]);
   const [name, setName] = useState("");
   const [plan, setPlan] = useState("Growth");
 

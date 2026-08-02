@@ -2,8 +2,9 @@ import QRCode from "qrcode";
 import { bookingRepository } from "@/repositories/booking.repository";
 import { Show } from "@/models/Show";
 import { Screen } from "@/models/Screen";
-import { Coupon } from "@/models/Coupon";
 import { Payment } from "@/models/Payment";
+import { promotionService } from "@/services/promotion.service";
+import { Theatre } from "@/models/Theatre";
 import { Notification } from "@/models/Notification";
 import { Wallet, Transaction } from "@/models/Wallet";
 import { seatLock } from "@/lib/redis/client";
@@ -13,7 +14,6 @@ import { generateBookingNumber, formatCurrency, formatDate, formatTime } from "@
 import { BOOKING_STATUS, PAYMENT_STATUS, TOKEN_CONFIG } from "@/constants";
 import { User } from "@/models/User";
 import { Movie } from "@/models/Movie";
-import { Theatre } from "@/models/Theatre";
 import { logger } from "@/lib/logger";
 
 export class BookingService {
@@ -79,33 +79,42 @@ export class BookingService {
     };
   }
 
-  async applyCoupon(code: string, amount: number) {
-    const coupon = await Coupon.findOne({
-      code: code.toUpperCase(),
-      isActive: true,
-      validFrom: { $lte: new Date() },
-      validUntil: { $gte: new Date() },
-    });
-
-    if (!coupon) throw new Error("Invalid or expired coupon");
-    if (coupon.usedCount >= coupon.usageLimit) throw new Error("Coupon usage limit reached");
-    if (amount < coupon.minAmount) {
-      throw new Error(`Minimum amount ₹${coupon.minAmount} required`);
+  async applyCoupon(
+    code: string,
+    amount: number,
+    ctx?: {
+      userId?: string;
+      theatreId?: string;
+      movieId?: string;
+      screenId?: string;
+      showId?: string;
+      seatCategories?: string[];
+      paymentMethod?: string;
+      showDateTime?: Date;
+      ownerId?: string;
     }
-
-    let discount =
-      coupon.discountType === "percentage"
-        ? (amount * coupon.discountValue) / 100
-        : coupon.discountValue;
-
-    if (coupon.maxDiscount) discount = Math.min(discount, coupon.maxDiscount);
-    discount = Math.min(discount, amount);
-
+  ) {
+    const result = await promotionService.resolve({
+      amount,
+      couponCode: code,
+      userId: ctx?.userId,
+      theatreId: ctx?.theatreId,
+      movieId: ctx?.movieId,
+      screenId: ctx?.screenId,
+      showId: ctx?.showId,
+      seatCategories: ctx?.seatCategories,
+      paymentMethod: ctx?.paymentMethod,
+      showDateTime: ctx?.showDateTime,
+      ownerId: ctx?.ownerId,
+      channel: "online",
+    });
     return {
-      code: coupon.code,
-      discount,
-      finalAmount: amount - discount,
-      description: coupon.description,
+      code: result.couponCode || code.toUpperCase(),
+      discount: result.discount,
+      finalAmount: result.finalAmount,
+      description: result.labels.join(", ") || "Coupon applied",
+      offerIds: result.offerIds,
+      labels: result.labels,
     };
   }
 
@@ -154,16 +163,22 @@ export class BookingService {
     }));
 
     const totalAmount = seats.reduce((sum, s) => sum + s.price, 0);
-    let discount = 0;
-
-    if (data.couponCode) {
-      const couponResult = await this.applyCoupon(data.couponCode, totalAmount);
-      discount = couponResult.discount;
-      await Coupon.updateOne(
-        { code: data.couponCode.toUpperCase() },
-        { $inc: { usedCount: 1 } }
-      );
-    }
+    const theatre = await Theatre.findById(show.theatreId).select("ownerId").lean();
+    const promo = await promotionService.resolve({
+      amount: totalAmount,
+      couponCode: data.couponCode,
+      userId,
+      theatreId: show.theatreId.toString(),
+      movieId: show.movieId.toString(),
+      screenId: show.screenId?.toString(),
+      showId: show._id.toString(),
+      seatCategories: seats.map((s) => s.type),
+      paymentMethod: data.paymentMethod,
+      showDateTime: show.startTime ? new Date(show.startTime) : new Date(),
+      ownerId: theatre?.ownerId?.toString(),
+      channel: "online",
+    });
+    const discount = promo.discount;
 
     const taxable = totalAmount - discount;
     const tax = Math.round(taxable * 0.18);
@@ -175,15 +190,40 @@ export class BookingService {
       showId: show._id,
       movieId: show.movieId,
       theatreId: show.theatreId,
+      ownerId: theatre?.ownerId,
+      screenId: show.screenId,
       seats,
       totalAmount,
       discount,
       tax,
       finalAmount,
-      couponCode: data.couponCode?.toUpperCase(),
+      couponCode: promo.couponCode,
+      offerIds: promo.offerIds,
+      discountBreakdown: {
+        couponDiscount: promo.couponDiscount,
+        offerDiscount: promo.offerDiscount,
+        manualDiscount: promo.manualDiscount,
+        labels: promo.labels,
+      },
       status: BOOKING_STATUS.PENDING,
       lockedUntil: new Date(Date.now() + TOKEN_CONFIG.SEAT_LOCK_SECONDS * 1000),
     } as never);
+
+    if (promo.discount > 0) {
+      await promotionService.recordRedemption({
+        ownerId: theatre?.ownerId?.toString(),
+        couponId: promo.couponId,
+        offerIds: promo.offerIds,
+        code: promo.couponCode,
+        bookingId: booking._id.toString(),
+        userId,
+        channel: "online",
+        discountAmount: promo.discount,
+        bookingAmount: totalAmount,
+        theatreId: show.theatreId.toString(),
+        actorId: userId,
+      });
+    }
 
     const payment = await Payment.create({
       bookingId: booking._id,

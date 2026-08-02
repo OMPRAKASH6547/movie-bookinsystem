@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Allow BUILD_DIR to avoid clashing with a running `next dev` lock on `.next`
+  distDir: process.env.BUILD_DIR || ".next",
   output: "standalone",
+  serverExternalPackages: ["pdfkit", "fontkit", "pdf-lib"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },

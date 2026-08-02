@@ -22,6 +22,9 @@ import { APP_NAME } from "@/constants";
 import { api } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/utils/cn";
+import { defaultTheatreLanding } from "@/lib/theatre/nav";
+import { ROLES } from "@/constants/roles";
+import { InstallAppButton } from "@/components/pwa/install-prompt";
 
 const NAV = [
   { href: "/movies", label: "Movies" },
@@ -29,6 +32,26 @@ const NAV = [
   { href: "/#offers", label: "Offers" },
   { href: "/#theatres", label: "Theatres" },
 ];
+
+function dashboardHref(user: {
+  role: string;
+  permissions?: string[];
+}): string {
+  if (user.role === ROLES.SUPER_ADMIN) return "/super-admin";
+  if (user.role === ROLES.ADMIN) return "/admin";
+  if (
+    user.role === ROLES.THEATRE_OWNER ||
+    user.role === ROLES.MANAGER ||
+    user.role === ROLES.COUNTER_STAFF ||
+    user.role === ROLES.TICKET_CHECKER ||
+    user.role === ROLES.ACCOUNTANT ||
+    user.role === ROLES.MARKETING ||
+    user.role === ROLES.EMPLOYEE
+  ) {
+    return defaultTheatreLanding(user.permissions, user.role as never);
+  }
+  return "/dashboard";
+}
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -43,6 +66,7 @@ export function Header() {
     if (query.trim()) {
       router.push(`/movies?search=${encodeURIComponent(query.trim())}`);
       setSearchOpen(false);
+      setOpen(false);
     }
   };
 
@@ -53,17 +77,11 @@ export function Header() {
       /* ignore */
     }
     logout();
+    setOpen(false);
     router.push("/");
   };
 
-  const dashHref =
-    user?.role === "super_admin"
-      ? "/super-admin"
-      : user?.role === "admin"
-        ? "/admin"
-        : user?.role === "theatre_owner" || user?.role === "manager"
-          ? "/theatre"
-          : "/dashboard";
+  const dashHref = user ? dashboardHref(user) : "/dashboard";
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -89,7 +107,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -107,18 +125,25 @@ export function Header() {
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
 
+          <div className="hidden sm:block">
+            <InstallAppButton variant="ghost" size="sm" label="Install" />
+          </div>
+
           {user ? (
-            <div className="hidden sm:flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={dashHref}>
-                  <LayoutDashboard className="h-4 w-4" />
-                  {user.name.split(" ")[0]}
-                </Link>
-              </Button>
-              <Button variant="ghost" size="icon" aria-label="Logout" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
+            <>
+              {/* Desktop account controls */}
+              <div className="hidden sm:flex items-center gap-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href={dashHref}>
+                    <LayoutDashboard className="h-4 w-4" />
+                    {user.name.split(" ")[0]}
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="icon" aria-label="Logout" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
@@ -186,19 +211,57 @@ export function Header() {
                   {item.label}
                 </Link>
               ))}
+
+              <div className="my-2 border-t border-border" />
+
+              <div className="px-3 py-2">
+                <InstallAppButton
+                  variant="outline"
+                  size="sm"
+                  label="Install as app"
+                  className="w-full [&_button]:w-full"
+                />
+              </div>
+
               {!user ? (
                 <>
-                  <Link href="/login" className="px-3 py-3 text-sm font-medium" onClick={() => setOpen(false)}>
+                  <Link
+                    href="/login"
+                    className="px-3 py-3 text-sm font-medium rounded-md hover:bg-muted"
+                    onClick={() => setOpen(false)}
+                  >
                     Sign in
                   </Link>
-                  <Link href="/register" className="px-3 py-3 text-sm font-medium text-primary" onClick={() => setOpen(false)}>
+                  <Link
+                    href="/register"
+                    className="px-3 py-3 text-sm font-medium text-primary rounded-md hover:bg-muted"
+                    onClick={() => setOpen(false)}
+                  >
                     Join free
                   </Link>
                 </>
               ) : (
-                <Link href={dashHref} className="px-3 py-3 text-sm font-medium" onClick={() => setOpen(false)}>
-                  Dashboard
-                </Link>
+                <>
+                  <p className="px-3 py-1 text-xs text-muted-foreground">
+                    Signed in as {user.name}
+                  </p>
+                  <Link
+                    href={dashHref}
+                    className="flex items-center gap-2 px-3 py-3 text-sm font-medium rounded-md hover:bg-muted"
+                    onClick={() => setOpen(false)}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 px-3 py-3 text-sm font-medium rounded-md hover:bg-muted text-left text-destructive"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Log out
+                  </button>
+                </>
               )}
             </div>
           </motion.nav>

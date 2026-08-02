@@ -18,6 +18,9 @@ import {
   Activity,
   Trophy,
   UserRoundSearch,
+  Tag,
+  Receipt,
+  Landmark,
 } from "lucide-react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/layout/header";
@@ -43,6 +46,9 @@ const ICONS: Record<TheatreNavKey, React.ReactNode> = {
   revenue: <BarChart3 className="h-4 w-4" />,
   reports: <FileSpreadsheet className="h-4 w-4" />,
   finance: <Wallet className="h-4 w-4" />,
+  promotions: <Tag className="h-4 w-4" />,
+  counter_sales: <Receipt className="h-4 w-4" />,
+  collection: <Landmark className="h-4 w-4" />,
   analytics: <BarChart3 className="h-4 w-4" />,
 };
 
@@ -76,19 +82,6 @@ export default function TheatreLayout({ children }: { children: React.ReactNode 
     <div className="min-h-svh flex flex-col">
       <div className="lg:hidden">
         <Header />
-        {nav.length > 0 && (
-          <div className="flex gap-1 overflow-x-auto border-b border-border px-2 py-2 bg-card/60">
-            {nav.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
-        )}
       </div>
       <div className="flex flex-1">
         <DashboardSidebar items={nav} title={title} />

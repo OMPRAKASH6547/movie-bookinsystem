@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -9,7 +10,7 @@ import { api } from "@/lib/api/client";
 import { toast } from "sonner";
 
 export default function AllTheatresPage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<JsonRecord[]>([]);
   const [status, setStatus] = useState("");
 
   const load = async () => {

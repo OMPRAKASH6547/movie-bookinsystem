@@ -1,5 +1,5 @@
 import { withAuth, type AuthenticatedRequest } from "@/lib/api/with-auth";
-import { successResponse, errorResponse, paginate } from "@/utils/api-response";
+import { successResponse, paginate } from "@/utils/api-response";
 import { ROLES } from "@/constants/roles";
 import { connectDB } from "@/lib/db/mongodb";
 import { Booking } from "@/models/Booking";

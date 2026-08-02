@@ -10,8 +10,16 @@ import { StaffSession, StaffActivityLog } from "@/models/StaffActivity";
 import { TicketScan } from "@/models/TicketScan";
 import { generateBookingNumber } from "@/utils/format";
 import { resolveOwnerId } from "@/lib/theatre/isolation";
+import { promotionService } from "@/services/promotion.service";
 import type { JwtPayload } from "@/types";
 import { ROLES } from "@/constants/roles";
+
+function shiftFromHour(h: number) {
+  if (h >= 6 && h < 12) return "morning";
+  if (h >= 12 && h < 17) return "afternoon";
+  if (h >= 17 && h < 22) return "evening";
+  return "night";
+}
 
 function parseUA(ua?: string | null) {
   const s = ua || "";
@@ -102,6 +110,9 @@ export class PosService {
       customerId?: string;
       counterId?: string;
       discount?: number;
+      couponCode?: string;
+      shift?: string;
+      allowStacking?: boolean;
     },
     meta?: { ip?: string; ua?: string }
   ) {
@@ -151,7 +162,23 @@ export class PosService {
     }
 
     const totalAmount = data.seats.reduce((a, s) => a + s.price, 0);
-    const discount = data.discount || 0;
+    const promo = await promotionService.resolve({
+      amount: totalAmount,
+      userId,
+      ownerId: theatre.ownerId?.toString(),
+      theatreId: show.theatreId.toString(),
+      movieId: show.movieId.toString(),
+      screenId: show.screenId?.toString(),
+      showId: show._id.toString(),
+      seatCategories: data.seats.map((s) => s.type),
+      paymentMethod: data.paymentMethod === "split" ? "cash" : data.paymentMethod,
+      showDateTime: show.startTime ? new Date(show.startTime) : new Date(),
+      channel: "pos",
+      couponCode: data.couponCode,
+      manualDiscount: data.discount,
+      allowStacking: data.allowStacking,
+    });
+    const discount = promo.discount;
     const taxable = Math.max(0, totalAmount - discount);
     const tax = Math.round(taxable * 0.18);
     const finalAmount = taxable + tax;
@@ -163,6 +190,8 @@ export class PosService {
       showId: show._id.toString(),
     });
     const qrCode = await QRCode.toDataURL(qrPayload, { margin: 1, width: 256 });
+    const channel = data.customerPhone || data.customerName ? "walkin" : "pos";
+    const now = new Date();
 
     const booking = await Booking.create({
       bookingNumber,
@@ -171,13 +200,23 @@ export class PosService {
       movieId: show.movieId,
       theatreId: show.theatreId,
       ownerId: theatre.ownerId,
+      screenId: show.screenId,
       seats: data.seats,
       totalAmount,
       discount,
       tax,
       finalAmount,
+      couponCode: promo.couponCode,
+      offerIds: promo.offerIds,
+      discountBreakdown: {
+        couponDiscount: promo.couponDiscount,
+        offerDiscount: promo.offerDiscount,
+        manualDiscount: promo.manualDiscount,
+        labels: promo.labels,
+      },
+      shift: data.shift || shiftFromHour(now.getHours()),
       status: "confirmed",
-      channel: data.customerPhone || data.customerName ? "walkin" : "pos",
+      channel,
       paymentMethod: data.paymentMethod,
       splitPayments: data.splitPayments,
       customerName: data.customerName,
@@ -189,6 +228,23 @@ export class PosService {
       barcode,
       printCount: 0,
     });
+
+    if (promo.discount > 0) {
+      await promotionService.recordRedemption({
+        ownerId: theatre.ownerId?.toString(),
+        couponId: promo.couponId,
+        offerIds: promo.offerIds,
+        code: promo.couponCode,
+        bookingId: booking._id.toString(),
+        userId,
+        staffId: user.sub,
+        channel,
+        discountAmount: promo.discount,
+        bookingAmount: totalAmount,
+        theatreId: show.theatreId.toString(),
+        actorId: user.sub,
+      });
+    }
 
     show.bookedSeats.push(...data.seats.map((s) => s.seatId));
     show.availableSeats = Math.max(0, show.availableSeats - data.seats.length);

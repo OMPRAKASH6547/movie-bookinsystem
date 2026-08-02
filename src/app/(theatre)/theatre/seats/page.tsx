@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ export default function SeatLayoutBuilderPage() {
   });
   const [brush, setBrush] = useState<SeatType>("premium");
   const [screenId, setScreenId] = useState<string | null>(null);
-  const [screens, setScreens] = useState<any[]>([]);
+  const [screens, setScreens] = useState<JsonRecord[]>([]);
 
   useEffect(() => {
     api.get("/owner/screens").then((res) => {

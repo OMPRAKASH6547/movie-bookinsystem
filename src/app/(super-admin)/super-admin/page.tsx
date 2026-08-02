@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -10,7 +11,7 @@ import { api } from "@/lib/api/client";
 import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function SuperAdminPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<JsonRecord | null>(null);
 
   useEffect(() => {
     api.get("/super-admin/overview").then((res) => setData(res.data.data));
@@ -45,7 +46,7 @@ export default function SuperAdminPage() {
       <section>
         <h2 className="font-semibold text-lg mb-4">Tenants</h2>
         <div className="space-y-3">
-          {(data?.tenantsList || []).map((t: any) => (
+          {(data?.tenantsList || []).map((t: JsonRecord) => (
             <div
               key={t.id}
               className="rounded-xl border border-border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -69,7 +70,7 @@ export default function SuperAdminPage() {
         <div className="rounded-xl border border-border p-5">
           <h3 className="font-semibold mb-2">Feature flags</h3>
           <ul className="text-sm space-y-2 text-muted-foreground">
-            {(data?.flags || []).map((f: any) => (
+            {(data?.flags || []).map((f: JsonRecord) => (
               <li key={f.id} className="flex justify-between">
                 <span>{f.label}</span>
                 <Badge variant={f.enabled ? "success" : "outline"}>

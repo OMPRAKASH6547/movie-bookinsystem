@@ -18,7 +18,10 @@ export type TheatreNavKey =
   | "reports"
   | "finance"
   | "analytics"
-  | "customers";
+  | "customers"
+  | "promotions"
+  | "counter_sales"
+  | "collection";
 
 export interface TheatreNavDef {
   key: TheatreNavKey;
@@ -131,6 +134,28 @@ export const THEATRE_NAV: TheatreNavDef[] = [
     href: "/theatre/finance",
     label: "Finance",
     permissions: [PERMISSIONS.MANAGE_FINANCE],
+  },
+  {
+    key: "promotions",
+    href: "/theatre/promotions",
+    label: "Offers & Coupons",
+    permissions: [PERMISSIONS.MANAGE_OFFERS, PERMISSIONS.MANAGE_COUPONS],
+  },
+  {
+    key: "counter_sales",
+    href: "/theatre/counter-sales",
+    label: "Counter sales",
+    permissions: [
+      PERMISSIONS.VIEW_REPORTS,
+      PERMISSIONS.VIEW_STAFF_PERFORMANCE,
+      PERMISSIONS.VIEW_OWNER_DASHBOARD,
+    ],
+  },
+  {
+    key: "collection",
+    href: "/theatre/collection",
+    label: "Collections",
+    permissions: [PERMISSIONS.MANAGE_FINANCE, PERMISSIONS.VIEW_REPORTS],
   },
   {
     key: "analytics",

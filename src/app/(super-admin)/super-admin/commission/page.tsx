@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
@@ -8,7 +9,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { Badge } from "@/components/ui/badge";
 
 export default function CommissionPage() {
-  const [tenants, setTenants] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<JsonRecord[]>([]);
   const [mrr, setMrr] = useState(0);
 
   useEffect(() => {

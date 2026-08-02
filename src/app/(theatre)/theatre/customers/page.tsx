@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -13,7 +14,7 @@ import { ErrorState } from "@/components/loading/error-state";
 
 export default function CustomerSearchPage() {
   const [q, setQ] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<JsonRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [searched, setSearched] = useState(false);
@@ -25,9 +26,9 @@ export default function CustomerSearchPage() {
     try {
       const { data } = await api.get("/pos/customers", { params: { q } });
       setResult(data.data);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(e);
-      toast.error(e?.response?.data?.message || "Search failed");
+      toast.error(apiErrorMessage(e, "Search failed"));
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function CustomerSearchPage() {
           <section>
             <h3 className="font-semibold mb-2">Profiles</h3>
             <div className="space-y-2">
-              {(result.users || []).map((u: any) => (
+              {(result.users || []).map((u: JsonRecord) => (
                 <div key={u._id} className="rounded-xl border border-border p-3 text-sm">
                   <p className="font-medium">{u.name}</p>
                   <p className="text-muted-foreground">
@@ -83,7 +84,7 @@ export default function CustomerSearchPage() {
           <section>
             <h3 className="font-semibold mb-2">Recent bookings</h3>
             <div className="space-y-2">
-              {(result.recentBookings || []).map((b: any) => (
+              {(result.recentBookings || []).map((b: JsonRecord) => (
                 <div
                   key={b._id}
                   className="rounded-xl border border-border p-3 text-sm flex justify-between"

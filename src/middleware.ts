@@ -1,22 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/bookings", "/wallet", "/wishlist", "/profile"];
-const ADMIN_PREFIXES = ["/admin"];
-const THEATRE_PREFIXES = ["/theatre"];
-const SUPER_PREFIXES = ["/super-admin"];
+const CUSTOMER_PROTECTED = ["/dashboard", "/bookings", "/wallet", "/wishlist", "/profile"];
+const STAFF_PROTECTED = ["/admin", "/theatre", "/super-admin"];
+
+function isUnder(pathname: string, prefixes: string[]) {
+  return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("access_token")?.value;
 
-  const needsAuth = [...PROTECTED_PREFIXES, ...ADMIN_PREFIXES, ...THEATRE_PREFIXES, ...SUPER_PREFIXES].some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
-  );
+  const needsAuth =
+    isUnder(pathname, CUSTOMER_PROTECTED) || isUnder(pathname, STAFF_PROTECTED);
 
-  // Soft gate: allow browsing dashboards in demo; APIs still enforce JWT.
-  // Redirect only when FORCE_AUTH=true
-  if (process.env.FORCE_AUTH === "true" && needsAuth && !token) {
+  // Always require login for dashboards (admin / theatre / customer account areas)
+  if (needsAuth && !token) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
@@ -33,14 +33,21 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/dashboard",
     "/dashboard/:path*",
+    "/bookings",
     "/bookings/:path*",
+    "/wallet",
     "/wallet/:path*",
+    "/wishlist",
     "/wishlist/:path*",
+    "/profile",
     "/profile/:path*",
+    "/admin",
     "/admin/:path*",
+    "/theatre",
     "/theatre/:path*",
+    "/super-admin",
     "/super-admin/:path*",
-    "/api/:path*",
   ],
 };

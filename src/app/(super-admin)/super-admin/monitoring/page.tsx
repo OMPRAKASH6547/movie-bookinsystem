@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +8,8 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 
 export default function MonitoringPage() {
-  const [health, setHealth] = useState<any>(null);
-  const [overview, setOverview] = useState<any>(null);
+  const [health, setHealth] = useState<JsonRecord | null>(null);
+  const [overview, setOverview] = useState<JsonRecord | null>(null);
 
   useEffect(() => {
     Promise.all([api.get("/health"), api.get("/super-admin/overview")])

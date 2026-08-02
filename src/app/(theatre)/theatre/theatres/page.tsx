@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -25,7 +26,7 @@ const empty = {
 };
 
 export default function TheatresManagePage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<JsonRecord[]>([]);
   const [form, setForm] = useState(empty);
 
   const load = async () => {
@@ -58,8 +59,8 @@ export default function TheatresManagePage() {
             toast.success("Theatre submitted for Super Admin approval");
             setForm(empty);
             load();
-          } catch (err: any) {
-            toast.error(err?.response?.data?.message || "Failed");
+          } catch (err: unknown) {
+            toast.error(apiErrorMessage(err, "Failed"));
           }
         }}
       >
@@ -83,7 +84,7 @@ export default function TheatresManagePage() {
           <Input
             key={key}
             placeholder={label}
-            value={(form as any)[key]}
+            value={(form as JsonRecord)[key]}
             onChange={(e) => setForm({ ...form, [key]: e.target.value })}
             required={["name", "address", "city", "state", "pincode"].includes(key)}
             className={key === "amenities" || key === "address" ? "sm:col-span-2" : ""}

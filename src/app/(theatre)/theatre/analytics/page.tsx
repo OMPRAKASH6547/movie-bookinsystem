@@ -1,4 +1,5 @@
 "use client";
+import type { JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import {
@@ -16,10 +17,10 @@ import { formatCurrency } from "@/utils/format";
 import { PageHeader } from "@/components/dashboard/page-header";
 
 export default function TheatreAnalyticsPage() {
-  const [data, setData] = useState<any>(null);
-  const [theatres, setTheatres] = useState<any[]>([]);
+  const [data, setData] = useState<JsonRecord | null>(null);
+  const [theatres, setTheatres] = useState<JsonRecord[]>([]);
   const [theatreId, setTheatreId] = useState("");
-  const [detail, setDetail] = useState<any>(null);
+  const [detail, setDetail] = useState<JsonRecord | null>(null);
 
   useEffect(() => {
     api.get("/theatre/analytics").then((res) => setData(res.data.data));

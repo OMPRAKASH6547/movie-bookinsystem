@@ -13,6 +13,7 @@ import { ListSkeleton } from "@/components/loading/skeletons";
 import { EmptyState } from "@/components/loading/empty-state";
 import { ErrorState } from "@/components/loading/error-state";
 import { SmartImage } from "@/components/loading/smart-image";
+import { downloadTicketPdf } from "@/lib/download-ticket";
 
 interface BookingRow {
   _id: string;
@@ -83,16 +84,10 @@ export default function BookingsList() {
   const downloadPdf = async (id: string, bookingNumber: string) => {
     setActionId(`pdf-${id}`);
     try {
-      const res = await api.get(`/bookings/${id}/pdf`, { responseType: "blob" });
-      const url = URL.createObjectURL(res.data);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ticket-${bookingNumber}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await downloadTicketPdf(id, bookingNumber);
       toast.success("PDF downloaded");
-    } catch {
-      toast.error("PDF download failed");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "PDF download failed");
     } finally {
       setActionId(null);
     }

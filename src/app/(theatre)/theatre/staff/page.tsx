@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage, type JsonRecord } from "@/types/ui";
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,8 +28,8 @@ const ROLES = [
 ] as const;
 
 export default function TheatreStaffPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [theatres, setTheatres] = useState<any[]>([]);
+  const [items, setItems] = useState<JsonRecord[]>([]);
+  const [theatres, setTheatres] = useState<JsonRecord[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<(typeof ROLES)[number]>("counter_staff");
@@ -139,8 +140,8 @@ export default function TheatreStaffPage() {
               setName("");
               setEmail("");
               load();
-            } catch (e: any) {
-              toast.error(e?.response?.data?.message || "Failed");
+            } catch (e: unknown) {
+              toast.error(apiErrorMessage(e, "Failed"));
             } finally {
               setSaving(false);
             }
@@ -167,7 +168,7 @@ export default function TheatreStaffPage() {
               <p className="text-sm text-muted-foreground">{s.email}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Theatres:{" "}
-                {(s.theatreIds || []).map((t: any) => t.name || t).join(", ") || "—"}
+                {(s.theatreIds || []).map((t: JsonRecord) => t.name || t).join(", ") || "—"}
               </p>
               {s.customPermissions?.length > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
